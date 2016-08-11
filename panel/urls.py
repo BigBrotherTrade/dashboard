@@ -13,3 +13,11 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from django.conf.urls import url
+
+from .views import *
+
+urlpatterns = [
+    # test
+    # url(r'^charts/(?P<graph_type>(\w+))/(?P<tmp_graph_id>(\d+))/$', ChartsView.as_view(), name="charts_view"),
+]

@@ -13,3 +13,14 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import logging
+
+from dashboard import app
+
+logger = logging.getLogger('panel.tasks')
+
+
+@app.task(bind=True)
+def collect_quote(_):
+    logger.info('start collect_quote')
+    logger.info('end collect_quote')
