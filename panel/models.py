@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from django.core.validators import int_list_validator
 from django.db import models
 
 from dashboard.const import *
@@ -85,11 +86,12 @@ class Order(models.Model):
 
 class Instrument(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
+    name = models.CharField('名称', max_length=32, null=True, blank=True)
     product_code = models.CharField('品种代码', max_length=16, unique=True)
-    all_inst = models.CharField('合约月份汇总', max_length=32)
-    main_code = models.CharField('主力合约', max_length=16)
-    last_main = models.CharField('上个主力合约', max_length=16)
-    change_time = models.DateTimeField('切换时间')
+    all_inst = models.CharField('合约月份汇总', max_length=128, null=True, blank=True)
+    main_code = models.CharField('主力合约', max_length=16, null=True, blank=True)
+    last_main = models.CharField('上个主力合约', max_length=16, null=True, blank=True)
+    change_time = models.DateTimeField('切换时间', null=True, blank=True)
 
     class Meta:
         verbose_name = '合约'

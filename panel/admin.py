@@ -42,7 +42,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(Instrument)
 class InstrumentAdmin(admin.ModelAdmin):
-    list_display = ('exchange', 'product_code', 'all_inst', 'main_code', 'last_main', 'change_time')
+    list_display = ('exchange', 'name', 'product_code', 'all_inst', 'main_code', 'last_main', 'change_time')
 
 
 @admin.register(DailyBar)

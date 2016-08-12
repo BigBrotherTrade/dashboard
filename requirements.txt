@@ -3,3 +3,6 @@ mysqlclient
 django-choices
 celery
 pytz
+aioredis
+ujson
+redis

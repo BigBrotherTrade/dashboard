@@ -34,10 +34,10 @@ class ContractType(DjangoChoices):
 
 
 class ExchangeType(DjangoChoices):
-    SHFE = C(label='上期所')
-    DCE = C(label='大商所')
-    CZCE = C(label='郑商所')
-    CFFEX = C(label='中金所')
+    SHFE = C(value='SHFE', label='上期所')
+    DCE = C(value='DCE', label='大商所')
+    CZCE = C(value='CZCE', label='郑商所')
+    CFFEX = C(value='CFFEX', label='中金所')
 
 
 class AddressType(DjangoChoices):
