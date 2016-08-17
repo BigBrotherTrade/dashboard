@@ -2,10 +2,10 @@ import re
 import ujson as json
 import os
 from collections import defaultdict
-
-import django
-import sys
 import redis
+import sys
+import django
+
 
 sys.path.append('/Users/jeffchen/Documents/gitdir/dashboard')
 os.environ["DJANGO_SETTINGS_MODULE"] = "dashboard.settings"

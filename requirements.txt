@@ -6,3 +6,5 @@ pytz
 aioredis
 ujson
 redis
+aiohttp
+tqdm

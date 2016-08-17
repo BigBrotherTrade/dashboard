@@ -103,7 +103,8 @@ class Instrument(models.Model):
 
 class DailyBar(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
-    code = models.CharField('合约代码', max_length=8)
+    product_code = models.CharField('品种代码', max_length=8, null=True)
+    cur_code = models.CharField('当前合约', max_length=8, null=True)
     time = models.DateField('时间')
     open = models.FloatField('开盘价')
     high = models.FloatField('最高价')
@@ -111,6 +112,7 @@ class DailyBar(models.Model):
     close = models.FloatField('收盘价')
     volume = models.IntegerField('成交量')
     open_interest = models.IntegerField('持仓量')
+    basis = models.FloatField('基差', null=True)
 
     class Meta:
         verbose_name = '日K线'
