@@ -43,14 +43,21 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(Instrument)
 class InstrumentAdmin(admin.ModelAdmin):
     list_display = ('exchange', 'name', 'product_code', 'all_inst', 'main_code', 'last_main', 'change_time')
-    ordering = ['exchange',]
+    ordering = ['exchange', ]
+
+
+@admin.register(MainBar)
+class MainBarAdmin(admin.ModelAdmin):
+    list_display = ('product_code', 'cur_code', 'time', 'open', 'high', 'low', 'close', 'volume', 'open_interest', 'basis')
 
 
 @admin.register(DailyBar)
 class DailyBarAdmin(admin.ModelAdmin):
-    list_display = ('product_code', 'cur_code', 'time', 'open', 'high', 'low', 'close', 'volume')
+    list_display = ('code', 'time', 'open', 'high', 'low', 'close', 'volume')
 
 
 @admin.register(Trade)
 class TradeAdmin(admin.ModelAdmin):
-    list_display = ('strategy', 'instrument', 'shares', 'direction', 'open_time', 'close_time', 'avg_entry_price', 'avg_exit_price', 'profit')
+    list_display = (
+        'strategy', 'instrument', 'shares', 'direction', 'open_time', 'close_time', 'avg_entry_price', 'avg_exit_price',
+        'profit')

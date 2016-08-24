@@ -16,6 +16,9 @@
 import logging
 import re
 import ujson as json
+
+import datetime
+import requests
 from collections import defaultdict
 import redis
 from dashboard import app
@@ -38,6 +41,7 @@ def collect_quote(_):
     logger.info('start collect_quote')
     try:
         inst_dict, inst_set = get_newest_inst()
+        update_inst_margin_fee(inst_set)
         for code, data in inst_dict.items():
             inst_obj, created = Instrument.objects.update_or_create(product_code=code, defaults={
                 'exchange': data['exchange'],
@@ -54,10 +58,19 @@ def collect_quote(_):
 
 
 def update_inst_margin_fee(inst_set):
+    """
+    更新每一个合约的保证金和手续费
+    :param inst_set:
+    :return:
+    """
     pass
 
 
 def get_newest_inst():
+    """
+    从CTP获取正在交易的所有合约
+    :return: 品种信息, 每个品种的正在交易的合约集合
+    """
     inst_set = defaultdict(set)
     inst_dict = defaultdict(dict)
     redis_client = redis.StrictRedis()
@@ -83,9 +96,21 @@ def get_newest_inst():
     return inst_dict, inst_set
 
 
-def calc_main_inst(inst):
+def calc_main_inst(inst: Instrument):
+    """
+    [["2016-07-18","2116.000","2212.000","2106.000","2146.000","34"],...]
+    :param inst:
+    :return:
+    """
     main_inst = None
     updated = False
+    for inst_code in inst.all_inst.split(','):
+        rst = requests.get(
+            'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesDailyKLine?symbol={}'.format(
+                inst_code))
+        for day_bar in rst.json():
+            pass
+
     return main_inst, updated
 
 
@@ -95,3 +120,20 @@ def check_rollover(inst):
 
 def calc_signal(inst):
     pass
+
+
+def fetch_daily_bar(day: datetime.datetime, market: str):
+    if market == ExchangeType.SHFE:
+        rst = requests.get('http://www.shfe.com.cn/data/dailydata/kx/kx{}.dat'.format(day.strftime('%Y%m%d')))
+        rst_json = rst.json()
+        for inst_dict in rst_json['o_curinstrument']:
+            """
+{'OPENINTERESTCHG': -11154, 'CLOSEPRICE': 36640, 'SETTLEMENTPRICE': 36770, 'OPENPRICE': 36990, 'PRESETTLEMENTPRICE': 37080, 'ZD2_CHG': -310, 'DELIVERYMONTH': '1609', 'VOLUME': 51102, 'PRODUCTSORTNO': 10, 'ZD1_CHG': -440, 'OPENINTEREST': 86824, 'ORDERNO': 0, 'PRODUCTNAME': '铜                  ', 'LOWESTPRICE': 36630, 'PRODUCTID': 'cu_f    ', 'HIGHESTPRICE': 37000}
+            """
+            DailyBar.objects.update_or_create(code=inst_dict['PRODUCTID'].split('_')[0]+inst_dict['DELIVERYMONTH'], exchange=market, time=day.strftime('%Y%m%d'), defaults={
+                'open': inst_dict['OPENPRICE'], 'high': inst_dict['HIGHESTPRICE'], 'low': inst_dict['LOWESTPRICE'], 'close': inst_dict['CLOSEPRICE'], 'volume': inst_dict['VOLUME'], 'open_interest': inst_dict['OPENINTEREST']
+            })
+    elif market == ExchangeType.DCE:
+        pass
+    elif market == ExchangeType.CZCE:
+        pass

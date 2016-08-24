@@ -100,7 +100,7 @@ class Instrument(models.Model):
         return '{}.{}'.format(self.exchange, self.main_code)
 
 
-class DailyBar(models.Model):
+class MainBar(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
     product_code = models.CharField('品种代码', max_length=8, null=True)
     cur_code = models.CharField('当前合约', max_length=8, null=True)
@@ -112,6 +112,25 @@ class DailyBar(models.Model):
     volume = models.IntegerField('成交量')
     open_interest = models.IntegerField('持仓量')
     basis = models.FloatField('基差', null=True)
+
+    class Meta:
+        verbose_name = '主力连续日K线'
+        verbose_name_plural = '主力连续日K线集合'
+
+    def __str__(self):
+        return '{}.{}'.format(self.exchange, self.code)
+
+
+class DailyBar(models.Model):
+    exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
+    code = models.CharField('品种代码', max_length=8, null=True)
+    time = models.DateField('时间')
+    open = models.FloatField('开盘价')
+    high = models.FloatField('最高价')
+    low = models.FloatField('最低价')
+    close = models.FloatField('收盘价')
+    volume = models.IntegerField('成交量')
+    open_interest = models.IntegerField('持仓量')
 
     class Meta:
         verbose_name = '日K线'
