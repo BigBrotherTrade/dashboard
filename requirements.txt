@@ -8,3 +8,6 @@ ujson
 redis
 aiohttp
 tqdm
+beautifulsoup4
+lxml
+requests

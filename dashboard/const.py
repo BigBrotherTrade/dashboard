@@ -72,3 +72,23 @@ class OrderStatus(DjangoChoices):
     Unknown = C(value='a', label='未知')
     NotTouched = C(value='b', label='尚未触发')
     Touched = C(value='c', label='已触发')
+
+
+DCE_NAME_CODE = {
+    '豆一': 'a',
+    '豆二': 'b',
+    '胶合板': 'bb',
+    '玉米': 'c',
+    '玉米淀粉': 'cs',
+    '纤维板': 'fb',
+    '铁矿石': 'i',
+    '焦炭': 'j',
+    '鸡蛋': 'jd',
+    '焦煤': 'jm',
+    '聚乙烯': 'l',
+    '豆粕': 'm',
+    '棕榈油': 'p',
+    '聚丙烯': 'pp',
+    '聚氯乙烯': 'v',
+    '豆油': 'y',
+}

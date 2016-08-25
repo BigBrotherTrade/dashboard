@@ -110,7 +110,7 @@ class MainBar(models.Model):
     low = models.FloatField('最低价')
     close = models.FloatField('收盘价')
     volume = models.IntegerField('成交量')
-    open_interest = models.IntegerField('持仓量')
+    open_interest = models.FloatField('持仓量')
     basis = models.FloatField('基差', null=True)
 
     class Meta:
@@ -124,13 +124,14 @@ class MainBar(models.Model):
 class DailyBar(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
     code = models.CharField('品种代码', max_length=8, null=True)
+    expire_date = models.IntegerField('交割时间', null=True)
     time = models.DateField('时间')
     open = models.FloatField('开盘价')
     high = models.FloatField('最高价')
     low = models.FloatField('最低价')
     close = models.FloatField('收盘价')
     volume = models.IntegerField('成交量')
-    open_interest = models.IntegerField('持仓量')
+    open_interest = models.FloatField('持仓量')
 
     class Meta:
         verbose_name = '日K线'
