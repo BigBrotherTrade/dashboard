@@ -36,7 +36,8 @@ class Broker(models.Model):
     name = models.CharField(verbose_name='名称', max_length=64)
     contract_type = models.CharField(verbose_name='市场', max_length=32, choices=ContractType.choices)
     trade_address = models.ForeignKey(Address, verbose_name='交易前置', on_delete=models.CASCADE, related_name='trade_address')
-    market_address = models.ForeignKey(Address, verbose_name='行情前置', on_delete=models.CASCADE, related_name='market_address')
+    market_address = models.ForeignKey(Address, verbose_name='行情前置', on_delete=models.CASCADE,
+                                       related_name='market_address')
     identify = models.CharField(verbose_name='唯一标志', max_length=32)
     username = models.CharField(verbose_name='用户名', max_length=32)
     password = models.CharField(verbose_name='密码', max_length=32)
@@ -59,6 +60,24 @@ class Strategy(models.Model):
 
     def __str__(self):
         return '{}'.format(self.name)
+
+
+class Param(models.Model):
+    strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.CASCADE)
+    code = models.CharField('参数名', max_length=64)
+    str_value = models.CharField('字符串值', max_length=128, null=True)
+    int_value = models.IntegerField('整数值', null=True)
+    float_value = models.FloatField('浮点值', null=True)
+    update_time = models.DateTimeField('更新时间')
+
+    class Meta:
+        verbose_name = '策略参数'
+        verbose_name_plural = '策略参数集合'
+
+    def __str__(self):
+        return '{}: {} = {}'.format(
+            self.strategy, self.code,
+            next((v for v in [self.str_value, self.int_value, self.float_value] if v is not None), '-'))
 
 
 class Order(models.Model):
@@ -100,6 +119,15 @@ class Instrument(models.Model):
         return '{}.{}'.format(self.exchange, self.main_code)
 
 
+class Signal(models.Model):
+    strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.CASCADE)
+    instrument = models.ForeignKey(Instrument, verbose_name='品种', on_delete=models.CASCADE)
+    type = models.CharField('信号类型', max_length=16)
+    trigger_time = models.DateTimeField('发生时间')
+    priority = models.IntegerField('优先级')
+    processed = models.BooleanField('已处理', null=True)
+
+
 class MainBar(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
     product_code = models.CharField('品种代码', max_length=8, null=True)
@@ -118,7 +146,7 @@ class MainBar(models.Model):
         verbose_name_plural = '主力连续日K线集合'
 
     def __str__(self):
-        return '{}.{}'.format(self.exchange, self.code)
+        return '{}.{}'.format(self.exchange, self.product_code)
 
 
 class DailyBar(models.Model):
@@ -145,7 +173,8 @@ class Trade(models.Model):
     broker = models.ForeignKey(Broker, verbose_name='券商', on_delete=models.CASCADE)
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.SET_NULL, null=True, blank=True)
     open_order = models.ForeignKey(Order, verbose_name='开仓报单', on_delete=models.CASCADE, related_name='open_order')
-    close_order = models.ForeignKey(Order, verbose_name='平仓报单', on_delete=models.CASCADE, related_name='close_order', null=True, blank=True)
+    close_order = models.ForeignKey(Order, verbose_name='平仓报单', on_delete=models.CASCADE,
+                                    related_name='close_order', null=True, blank=True)
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
     instrument = models.CharField('品种代码', max_length=8)
     direction = models.CharField('方向', max_length=8, choices=DirectionType.choices)
