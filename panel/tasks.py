@@ -16,7 +16,7 @@
 import logging
 import re
 import datetime
-
+import math
 import pytz
 from collections import defaultdict
 import xml.etree.ElementTree as ET
@@ -25,8 +25,8 @@ import ujson as json
 import redis
 import requests
 from bs4 import BeautifulSoup
-from django.db.models import Max
 
+from django.db.models import F
 from dashboard import app
 from panel.models import *
 
@@ -50,17 +50,15 @@ def collect_quote(_):
             logger.info('今日是非交易日, 不计算任何数据。')
             return
         fetch_today_bars()
-        inst_dict, inst_set = get_newest_inst()
-        update_inst_margin_fee(inst_set)
+        inst_dict, trading_set = get_newest_inst()
+        update_inst_margin_fee(trading_set)
         for code, data in inst_dict.items():
             inst_obj, created = Instrument.objects.update_or_create(product_code=code, defaults={
                 'exchange': data['exchange'],
                 'name': data['name'],
-                'all_inst': ','.join(sorted(inst_set[code]))
+                'all_inst': ','.join(sorted(trading_set[code]))
             })
-            main_inst, updated = calc_main_inst(inst_obj)
-            if updated:
-                check_rollover(inst_obj)
+            calc_main_inst(inst_obj)
             calc_signal(inst_obj)
     except Exception as e:
         logger.error('collect_quote failed: %s', e, exc_info=True)
@@ -106,31 +104,75 @@ def get_newest_inst():
     return inst_dict, inst_set
 
 
-def calc_main_inst(inst: Instrument, day: datetime.datetime):
+def calc_main_inst(inst: Instrument, day: datetime.datetime=datetime.datetime.today()):
     """
     [["2016-07-18","2116.000","2212.000","2106.000","2146.000","34"],...]
     """
-    main_inst = None
     updated = False
-    check = DailyBar.objects.filter(
-        exchange=inst.exchange, code__startswith=inst.product_code, expire_date__gte=day.strftime('%y%m'),
+    if inst.main_code is not None:
+        expire_date = calc_expire_date(inst.main_code, day)
+    else:
+        expire_date = day.strftime('%y%m')
+    # 条件1: 成交量最大 & 成交量>1万 & 持仓量>1万 = 主力合约
+    check_bar = DailyBar.objects.filter(
+        exchange=inst.exchange, code__startswith=inst.product_code, expire_date__gte=expire_date,
         time=day, volume__gte=10000, open_interest__gte=10000).order_by('-volume').first()
-    if check is None:
-        check = DailyBar.objects.filter(exchange=inst.exchange, code__startswith=inst.product_code,).values('time', 'code').annotate(Max('volume'))
-    if inst.main_code is None and check1 is not None:
-        inst.main_code = check1.code
-        inst.save(update_fields=['main_code'])
-    for inst_code in inst.all_inst.split(','):
-        rst = requests.get(
-            'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesDailyKLine?symbol={}'.format(inst_code))
-        for day_bar in rst.json():
-            pass
+    # 条件2: 不满足条件1但是连续3天成交量最大 = 主力合约
+    if check_bar is None:
+        check_bar = list(DailyBar.objects.raw(
+            "SELECT a.* FROM panel_dailybar a INNER JOIN(SELECT time, max(volume) v FROM panel_dailybar "
+            "WHERE EXCHANGE=%s and CODE LIKE %s GROUP BY time) b ON a.time = b.time AND a.volume = b.v "
+            "where a.exchange=%s and code like %s ORDER BY a.time desc LIMIT 3",
+            [inst.exchange, inst.product_code+'%'] * 2))
+        if check_bar[0].code == check_bar[1].code == check_bar[2].code:
+            check_bar = check_bar[0]
+        else:
+            check_bar = None
 
-    return main_inst, updated
+    if inst.main_code is None:
+        inst.main_code = check_bar.code
+        inst.change_time = datetime.datetime.now().replace(tzinfo=pytz.FixedOffset(480))
+        inst.save(update_fields=['main_code', 'change_time'])
+        store_main_bar(check_bar)
+    elif inst.main_code != check_bar.code and check_bar.code > inst.main_code:
+        inst.last_main = inst.main_code
+        inst.main_code = check_bar.code
+        inst.change_time = datetime.datetime.now().replace(tzinfo=pytz.FixedOffset(480))
+        inst.save(update_fields=['last_main', 'main_code', 'change_time'])
+        store_main_bar(check_bar)
+        handle_rollover(inst, check_bar)
+        updated = True
+    else:
+        bar = DailyBar.objects.get(exchange=inst.exchange, code=inst.main_code, time=day)
+        store_main_bar(bar)
+    return inst.main_code, updated
 
 
-def check_rollover(inst):
-    pass
+def handle_rollover(inst: Instrument, new_bar: DailyBar):
+    """
+    换月处理, 基差=新合约收盘价-旧合约收盘价, 从今日起之前的所有连续合约的OHLC加上基差
+    """
+    product_code = re.findall('[A-Za-z]+', new_bar.code)[0]
+    old_bar = DailyBar.objects.get(exchange=inst.exchange, code=inst.last_main, time=new_bar.time)
+    main_bar = MainBar.objects.get(
+        exchange=inst.exchange, product_code=product_code, time=new_bar.time)
+    basis = new_bar.close - old_bar.close
+    main_bar.basis = basis
+    main_bar.save(update_fields=['basis'])
+    MainBar.objects.filter(exchange=inst.exchange, product_code=product_code, time__lte=new_bar.time).update(
+        open=F('open')+basis, high=F('high')+basis, low=F('low')+basis, close=F('close')+basis)
+
+
+def store_main_bar(bar: DailyBar):
+    MainBar.objects.update_or_create(
+        exchange=bar.exchange, product_code=re.findall('[A-Za-z]+', bar.code)[0], time=bar.time, defaults={
+            'cur_code': bar.code,
+            'open': bar.open,
+            'high': bar.high,
+            'low': bar.low,
+            'close': bar.close,
+            'volume': bar.volume,
+            'open_interest': bar.open_interest})
 
 
 def calc_signal(inst):
@@ -211,13 +253,10 @@ def fetch_daily_bar(day: datetime.datetime, market: str):
 ['CF601', '11,970.00', '11,970.00', '11,970.00', '11,800.00', '11,870.00', '11,905.00', '-100.00',
 '-65.00', '13,826', '59,140', '-10,760', '82,305.24', '']
                 """
-                expire_date = int(re.findall('\d+', inst_data[0])[0])
-                if expire_date < 1000:
-                    expire_date += 1000
                 DailyBar.objects.update_or_create(
                     code=inst_data[0],
                     exchange=market, time=day, defaults={
-                        'expire_date': expire_date,
+                        'expire_date': calc_expire_date(inst_data[0], day),
                         'open': inst_data[2].replace(',', '') if float(inst_data[2].replace(',', '')) > 0.1
                         else inst_data[5].replace(',', ''),
                         'high': inst_data[3].replace(',', '') if float(inst_data[3].replace(',', '')) > 0.1
@@ -263,27 +302,43 @@ def fetch_daily_bar(day: datetime.datetime, market: str):
                         'close': inst_data.findtext('closeprice').replace(',', ''),
                         'volume': inst_data.findtext('volume').replace(',', ''),
                         'open_interest': inst_data.findtext('openinterest').replace(',', '')})
-
+        return True
     except Exception as e:
         logger.error('%s, row=%s', repr(e), error_data, exc_info=True)
+        return False
 
 
 def fetch_today_bars():
-    if is_trading_day():
-        day = datetime.datetime.today()
+    day = datetime.datetime.today()
+    if is_trading_day(day):
         fetch_daily_bar(day, 'SHFE')
         fetch_daily_bar(day, 'DCE')
         fetch_daily_bar(day, 'CZCE')
         fetch_daily_bar(day, 'CFFEX')
-        return True
 
 
-def is_trading_day():
+def is_trading_day(day: datetime.datetime=datetime.datetime.today()):
     """
-    判断今天是否是交易日, 方法是从中金所获取今日的K线数据,判断http的返回码(如果出错会返回302重定向至404页面),
+    判断是否是交易日, 方法是从中金所获取今日的K线数据,判断http的返回码(如果出错会返回302重定向至404页面),
     因为开市前也可能返回302, 所以适合收市后(下午)使用
     :return: bool
     """
-    day = datetime.datetime.today()
     rst = requests.get('http://www.cffex.com.cn/fzjy/mrhq/{}/index.xml'.format(day.strftime('%Y%m/%d')))
     return rst.status_code != 302
+
+
+def calc_expire_date(inst_code: str, day: datetime.datetime):
+    expire_date = int(re.findall('\d+', inst_code)[0])
+    if expire_date < 1000:
+        year_exact = math.floor(day.year % 100 / 10)
+        if expire_date < 100 and day.year % 10 == 9:
+            year_exact += 1
+        expire_date += year_exact * 1000
+    return expire_date
+
+
+def create_main(inst: Instrument):
+    for day in DailyBar.objects.all().order_by('time').values_list('time', flat=True).distinct():
+        for bar in DailyBar.objects.filter(
+                exchange=inst.exchange, code__startswith=inst.product_code, time=day).order_by('-volume'):
+            pass
