@@ -50,8 +50,6 @@ def collect_quote(_):
         if not is_trading_day():
             logger.info('今日是非交易日, 不计算任何数据。')
             return
-        logger.info('测试')
-        return
         fetch_today_bars()
         inst_dict, trading_set = get_newest_inst()
         update_inst_margin_fee(trading_set)
@@ -353,7 +351,8 @@ def is_trading_day(day: datetime.datetime=datetime.datetime.today()):
     因为开市前也可能返回302, 所以适合收市后(下午)使用
     :return: bool
     """
-    rst = requests.get('http://www.cffex.com.cn/fzjy/mrhq/{}/index.xml'.format(day.strftime('%Y%m/%d')))
+    rst = requests.get('http://www.cffex.com.cn/fzjy/mrhq/{}/index.xml'.format(day.strftime('%Y%m/%d')),
+                       allow_redirects=False)
     return rst.status_code != 302
 
 
