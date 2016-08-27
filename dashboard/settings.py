@@ -156,3 +156,5 @@ CELERYBEAT_SCHEDULE = {
         'options': {'expires': 60},
     },
 }
+if sys.platform == 'linux':
+    DEBUG = False
