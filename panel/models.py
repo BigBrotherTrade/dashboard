@@ -67,7 +67,7 @@ class Param(models.Model):
     code = models.CharField('参数名', max_length=64)
     str_value = models.CharField('字符串值', max_length=128, null=True)
     int_value = models.IntegerField('整数值', null=True)
-    float_value = models.FloatField('浮点值', null=True)
+    float_value = models.DecimalField('浮点值', null=True, max_digits=12, decimal_places=3)
     update_time = models.DateTimeField('更新时间')
 
     class Meta:
@@ -87,7 +87,7 @@ class Order(models.Model):
     instrument = models.CharField('品种代码', max_length=8)
     front = models.IntegerField('前置编号')
     session = models.IntegerField('会话编号')
-    price = models.FloatField('报单价格')
+    price = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='报单价格')
     direction = models.CharField('方向', max_length=8, choices=DirectionType.choices)
     offset_flag = models.CharField('开平', max_length=8, choices=OffsetFlag.choices)
     status = models.CharField('状态', max_length=16, choices=OrderStatus.choices)
@@ -125,7 +125,7 @@ class Signal(models.Model):
     type = models.CharField('信号类型', max_length=16)
     trigger_time = models.DateTimeField('发生时间')
     priority = models.IntegerField('优先级')
-    processed = models.BooleanField('已处理', null=True)
+    processed = models.BooleanField('已处理', default=False)
 
 
 class MainBar(models.Model):
@@ -133,13 +133,13 @@ class MainBar(models.Model):
     product_code = models.CharField('品种代码', max_length=8, null=True)
     cur_code = models.CharField('当前合约', max_length=8, null=True)
     time = models.DateField('时间')
-    open = models.FloatField('开盘价')
-    high = models.FloatField('最高价')
-    low = models.FloatField('最低价')
-    close = models.FloatField('收盘价')
+    open = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='开盘价')
+    high = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='最高价')
+    low = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='最低价')
+    close = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='收盘价')
     volume = models.IntegerField('成交量')
-    open_interest = models.FloatField('持仓量')
-    basis = models.FloatField('基差', null=True)
+    open_interest = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓量')
+    basis = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='基差', null=True)
 
     class Meta:
         verbose_name = '主力连续日K线'
@@ -154,12 +154,12 @@ class DailyBar(models.Model):
     code = models.CharField('品种代码', max_length=8, null=True)
     expire_date = models.IntegerField('交割时间', null=True)
     time = models.DateField('时间')
-    open = models.FloatField('开盘价')
-    high = models.FloatField('最高价')
-    low = models.FloatField('最低价')
-    close = models.FloatField('收盘价')
+    open = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='开盘价')
+    high = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='最高价')
+    low = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='最低价')
+    close = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='收盘价')
     volume = models.IntegerField('成交量')
-    open_interest = models.FloatField('持仓量')
+    open_interest = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓量')
 
     class Meta:
         verbose_name = '日K线'
@@ -182,11 +182,11 @@ class Trade(models.Model):
     close_time = models.DateTimeField('平仓日期', null=True, blank=True)
     shares = models.IntegerField('手数', blank=True)
     filled_shares = models.IntegerField('已成交手数', null=True, blank=True)
-    avg_entry_price = models.FloatField('持仓均价')
-    avg_exit_price = models.FloatField('平仓均价', null=True, blank=True)
-    profit = models.FloatField('持仓盈亏')
-    frozen_margin = models.FloatField('冻结保证金')
-    cost = models.FloatField('手续费')
+    avg_entry_price = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓均价')
+    avg_exit_price = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='平仓均价', null=True, blank=True)
+    profit = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓盈亏')
+    frozen_margin = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='冻结保证金')
+    cost = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='手续费')
 
     class Meta:
         verbose_name = '交易记录'

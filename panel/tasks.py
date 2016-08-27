@@ -20,6 +20,7 @@ import math
 import pytz
 from collections import defaultdict
 import xml.etree.ElementTree as ET
+from decimal import Decimal
 
 import ujson as json
 import redis
@@ -113,38 +114,64 @@ def calc_main_inst(inst: Instrument, day: datetime.datetime=datetime.datetime.to
         expire_date = calc_expire_date(inst.main_code, day)
     else:
         expire_date = day.strftime('%y%m')
-    # 条件1: 成交量最大 & 成交量>1万 & 持仓量>1万 = 主力合约
-    check_bar = DailyBar.objects.filter(
-        exchange=inst.exchange, code__startswith=inst.product_code, expire_date__gte=expire_date,
-        time=day, volume__gte=10000, open_interest__gte=10000).order_by('-volume').first()
+    # 条件1: 成交量最大 & (成交量>1万 & 持仓量>1万 or 股指) = 主力合约
+    if inst.exchange == ExchangeType.CFFEX:
+        check_bar = DailyBar.objects.filter(
+            exchange=inst.exchange, code__regex='^{}[0-9]+'.format(inst.product_code), expire_date__gte=expire_date,
+            time=day).order_by('-volume').first()
+    else:
+        check_bar = DailyBar.objects.filter(
+            exchange=inst.exchange, code__regex='^{}[0-9]+'.format(inst.product_code), expire_date__gte=expire_date,
+            time=day, volume__gte=10000, open_interest__gte=10000).order_by('-volume').first()
     # 条件2: 不满足条件1但是连续3天成交量最大 = 主力合约
     if check_bar is None:
-        check_bar = list(DailyBar.objects.raw(
-            "SELECT a.* FROM panel_dailybar a INNER JOIN(SELECT time, max(volume) v FROM panel_dailybar "
-            "WHERE EXCHANGE=%s and CODE LIKE %s GROUP BY time) b ON a.time = b.time AND a.volume = b.v "
-            "where a.exchange=%s and code like %s ORDER BY a.time desc LIMIT 3",
-            [inst.exchange, inst.product_code+'%'] * 2))
-        if check_bar[0].code == check_bar[1].code == check_bar[2].code:
-            check_bar = check_bar[0]
+        check_bars = list(DailyBar.objects.raw(
+            "SELECT a.* FROM panel_dailybar a INNER JOIN(SELECT time, max(volume) v, max(open_interest) i "
+            "FROM panel_dailybar WHERE EXCHANGE=%s and CODE RLIKE %s GROUP BY time) b ON a.time = b.time "
+            "AND a.volume = b.v AND a.open_interest = b.i "
+            "where a.exchange=%s and code Rlike %s AND a.time <= %s ORDER BY a.time desc LIMIT 3",
+            [inst.exchange, '^{}[0-9]+'.format(inst.product_code)] * 2 + [day.strftime('%y/%m/%d')]))
+        if len(set(bar.code for bar in check_bars)) == 1:
+            check_bar = check_bars[0]
         else:
             check_bar = None
 
     if inst.main_code is None:
+        if check_bar is None:
+            check_bar = DailyBar.objects.filter(
+                exchange=inst.exchange, code__regex='^{}[0-9]+'.format(inst.product_code),
+                expire_date__gte=expire_date, time=day).order_by('-volume', '-open_interest').first()
         inst.main_code = check_bar.code
-        inst.change_time = datetime.datetime.now().replace(tzinfo=pytz.FixedOffset(480))
+        inst.change_time = day
         inst.save(update_fields=['main_code', 'change_time'])
         store_main_bar(check_bar)
-    elif inst.main_code != check_bar.code and check_bar.code > inst.main_code:
+    elif check_bar is not None and inst.main_code != check_bar.code and check_bar.code > inst.main_code:
         inst.last_main = inst.main_code
         inst.main_code = check_bar.code
-        inst.change_time = datetime.datetime.now().replace(tzinfo=pytz.FixedOffset(480))
+        inst.change_time = day
         inst.save(update_fields=['last_main', 'main_code', 'change_time'])
         store_main_bar(check_bar)
         handle_rollover(inst, check_bar)
         updated = True
     else:
         bar = DailyBar.objects.get(exchange=inst.exchange, code=inst.main_code, time=day)
-        store_main_bar(bar)
+        # 若当前主力合约当天成交量为0, 需要换下一个合约
+        if bar.volume == 0 or bar.open_interest == Decimal(0):
+            check_bar = DailyBar.objects.filter(
+                exchange=inst.exchange, code__regex='^{}[0-9]+'.format(inst.product_code),
+                expire_date__gte=expire_date, time=day).order_by('-volume', '-open_interest').first()
+            if bar.code != check_bar.code:
+                inst.last_main = inst.main_code
+                inst.main_code = check_bar.code
+                inst.change_time = day
+                inst.save(update_fields=['last_main', 'main_code', 'change_time'])
+                store_main_bar(check_bar)
+                handle_rollover(inst, check_bar)
+                updated = True
+            else:
+                store_main_bar(bar)
+        else:
+            store_main_bar(bar)
     return inst.main_code, updated
 
 
@@ -158,6 +185,7 @@ def handle_rollover(inst: Instrument, new_bar: DailyBar):
         exchange=inst.exchange, product_code=product_code, time=new_bar.time)
     basis = new_bar.close - old_bar.close
     main_bar.basis = basis
+    basis = float(basis)
     main_bar.save(update_fields=['basis'])
     MainBar.objects.filter(exchange=inst.exchange, product_code=product_code, time__lte=new_bar.time).update(
         open=F('open')+basis, high=F('high')+basis, low=F('low')+basis, close=F('close')+basis)
@@ -257,11 +285,11 @@ def fetch_daily_bar(day: datetime.datetime, market: str):
                     code=inst_data[0],
                     exchange=market, time=day, defaults={
                         'expire_date': calc_expire_date(inst_data[0], day),
-                        'open': inst_data[2].replace(',', '') if float(inst_data[2].replace(',', '')) > 0.1
+                        'open': inst_data[2].replace(',', '') if Decimal(inst_data[2].replace(',', '')) > 0.1
                         else inst_data[5].replace(',', ''),
-                        'high': inst_data[3].replace(',', '') if float(inst_data[3].replace(',', '')) > 0.1
+                        'high': inst_data[3].replace(',', '') if Decimal(inst_data[3].replace(',', '')) > 0.1
                         else inst_data[5].replace(',', ''),
-                        'low': inst_data[4].replace(',', '') if float(inst_data[4].replace(',', '')) > 0.1
+                        'low': inst_data[4].replace(',', '') if Decimal(inst_data[4].replace(',', '')) > 0.1
                         else inst_data[5].replace(',', ''),
                         'close': inst_data[5].replace(',', ''),
                         'volume': inst_data[9].replace(',', ''),
@@ -338,7 +366,13 @@ def calc_expire_date(inst_code: str, day: datetime.datetime):
 
 
 def create_main(inst: Instrument):
+    print('processing ', inst.product_code)
     for day in DailyBar.objects.all().order_by('time').values_list('time', flat=True).distinct():
-        for bar in DailyBar.objects.filter(
-                exchange=inst.exchange, code__startswith=inst.product_code, time=day).order_by('-volume'):
-            pass
+        print(day, calc_main_inst(inst, datetime.datetime.combine(
+            day, datetime.time.min.replace(tzinfo=pytz.FixedOffset(480)))))
+
+
+def create_main_all():
+    for inst in Instrument.objects.filter(id__gte=15):
+        create_main(inst)
+    print('all done!')

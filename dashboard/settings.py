@@ -152,7 +152,7 @@ CELERY_IMPORTS = ['panel.tasks']
 CELERYBEAT_SCHEDULE = {
     '每天更新合约': {
         'task': 'panel.tasks.collect_quote',
-        'schedule': timedelta(minutes=1),
+        'schedule': crontab(hour=16),
         'options': {'expires': 60},
     },
 }

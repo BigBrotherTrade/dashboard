@@ -49,11 +49,12 @@ class InstrumentAdmin(admin.ModelAdmin):
 @admin.register(MainBar)
 class MainBarAdmin(admin.ModelAdmin):
     list_display = ('product_code', 'cur_code', 'time', 'open', 'high', 'low', 'close', 'volume', 'open_interest', 'basis')
+    search_fields = ('product_code', 'cur_code', 'time',)
 
 
 @admin.register(DailyBar)
 class DailyBarAdmin(admin.ModelAdmin):
-    list_display = ('code', 'time', 'open', 'high', 'low', 'close', 'volume')
+    list_display = ('code', )
 
 
 @admin.register(Trade)
