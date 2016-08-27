@@ -50,6 +50,8 @@ def collect_quote(_):
         if not is_trading_day():
             logger.info('今日是非交易日, 不计算任何数据。')
             return
+        logger.info('测试')
+        return
         fetch_today_bars()
         inst_dict, trading_set = get_newest_inst()
         update_inst_margin_fee(trading_set)
