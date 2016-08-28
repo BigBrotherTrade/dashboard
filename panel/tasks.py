@@ -26,6 +26,8 @@ import ujson as json
 import redis
 import requests
 from bs4 import BeautifulSoup
+import numpy as np
+import talib
 
 from django.db.models import F
 from dashboard import app
@@ -204,7 +206,7 @@ def store_main_bar(bar: DailyBar):
 
 
 def calc_signal(inst):
-    pass
+    talib.ATR()
 
 
 def fetch_daily_bar(day: datetime.datetime, market: str):

@@ -54,7 +54,7 @@ class MainBarAdmin(admin.ModelAdmin):
 
 @admin.register(DailyBar)
 class DailyBarAdmin(admin.ModelAdmin):
-    list_display = ('code', )
+    list_display = ('exchange', 'code', 'time', 'open', 'high', 'low', 'close', 'volume', 'open_interest')
 
 
 @admin.register(Trade)

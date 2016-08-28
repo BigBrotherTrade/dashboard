@@ -11,3 +11,5 @@ tqdm
 beautifulsoup4
 lxml
 requests
+numpy
+TA-Lib
