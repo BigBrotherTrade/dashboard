@@ -48,21 +48,23 @@ def collect_quote(_):
     各品种平仓价格
     微信报告
     """
-    logger.info('start collect_quote')
     try:
-        day = datetime.datetime.today() - datetime.timedelta(days=1)
+        day = datetime.datetime.today()
         day = day.replace(tzinfo=pytz.FixedOffset(480))
         if not is_trading_day(day):
             logger.info('今日是非交易日, 不计算任何数据。')
             return
+        logger.info('每日盘后计算, day: %s, 获取交易所日线数据..', day)
         fetch_daily_bar(day, 'SHFE')
         fetch_daily_bar(day, 'DCE')
         fetch_daily_bar(day, 'CZCE')
         fetch_daily_bar(day, 'CFFEX')
+        logger.info('获取CTP合约基本信息..')
         inst_dict, trading_set = get_newest_inst()
+        logger.info('获取CTP合约保证金、手续费..')
         update_inst_margin_fee(trading_set)
         for code, data in inst_dict.items():
-            print('process ', code)
+            logger.info('计算连续合约, 交易信号: %s', code)
             inst_obj, created = Instrument.objects.update_or_create(product_code=code, defaults={
                 'exchange': data['exchange'],
                 'name': data['name'],
@@ -72,7 +74,7 @@ def collect_quote(_):
             calc_signal(inst_obj, day)
     except Exception as e:
         logger.error('collect_quote failed: %s', e, exc_info=True)
-    logger.info('collect_quote done!')
+    logger.info('盘后计算完毕!')
 
 
 def update_inst_margin_fee(inst_set):
