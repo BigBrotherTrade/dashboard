@@ -17,6 +17,8 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import RedirectView
 
+admin.site.site_header = '操盘大哥v2.0-商品期货版'
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^panel/', include('panel.urls', namespace='panel')),
