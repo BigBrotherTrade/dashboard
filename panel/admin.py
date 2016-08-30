@@ -21,18 +21,19 @@ from .models import *
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-    list_display = ('name', 'url')
+    list_display = ('name', 'url', 'type', 'operator')
 
 
 @admin.register(Broker)
 class BrokerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'contract_type', 'trade_address', 'market_address', 'identify', 'username')
+    list_display = ('name', 'contract_type', 'trade_address', 'market_address',
+                    'identify', 'username', 'cash', 'pre_balance', 'current')
     form = BrokerForm
 
 
 @admin.register(Strategy)
 class StrategyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'broker')
+    list_display = ('name', 'broker', 'get_instruments')
 
 
 @admin.register(Order)
@@ -62,3 +63,24 @@ class TradeAdmin(admin.ModelAdmin):
     list_display = (
         'strategy', 'instrument', 'shares', 'direction', 'open_time', 'close_time', 'avg_entry_price', 'avg_exit_price',
         'profit')
+
+
+@admin.register(Param)
+class TradeAdmin(admin.ModelAdmin):
+    list_display = (
+        'strategy', 'update_time', 'code', 'str_value', 'int_value', 'float_value')
+    search_fields = ('code',)
+
+
+@admin.register(Signal)
+class SignalAdmin(admin.ModelAdmin):
+    list_display = (
+        'strategy', 'instrument', 'type', 'trigger_value', 'trigger_time', 'priority', 'processed')
+    search_fields = ('instrument',)
+
+
+@admin.register(Performance)
+class PerformanceAdmin(admin.ModelAdmin):
+    list_display = (
+        'broker', 'day', 'capital', 'unit_count', 'NAV', 'accumulated', 'dividend')
+    search_fields = ('day',)

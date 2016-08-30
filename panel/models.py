@@ -15,7 +15,7 @@
 # under the License.
 from django.db import models
 
-from dashboard.const import *
+from .const import *
 
 
 class Address(models.Model):
@@ -26,7 +26,7 @@ class Address(models.Model):
 
     class Meta:
         verbose_name = '前置地址'
-        verbose_name_plural = '前置地址集合'
+        verbose_name_plural = '前置地址列表'
 
     def __str__(self):
         return '{}{}-{}'.format(self.name, self.get_operator_display(), self.get_type_display())
@@ -41,38 +41,64 @@ class Broker(models.Model):
     identify = models.CharField(verbose_name='唯一标志', max_length=32)
     username = models.CharField(verbose_name='用户名', max_length=32)
     password = models.CharField(verbose_name='密码', max_length=32)
+    cash = models.DecimalField(verbose_name='可用资金', null=True, max_digits=12, decimal_places=2)
+    current = models.DecimalField(verbose_name='动态权益', null=True, max_digits=12, decimal_places=2)
+    pre_balance = models.DecimalField(verbose_name='静态权益', null=True, max_digits=12, decimal_places=2)
 
     class Meta:
-        verbose_name = '券商'
-        verbose_name_plural = '券商集合'
+        verbose_name = '账户'
+        verbose_name_plural = '账户列表'
 
     def __str__(self):
         return '{}-{}'.format(self.name, self.get_contract_type_display())
 
 
+class Performance(models.Model):
+    broker = models.ForeignKey(Broker, verbose_name='账户', on_delete=models.CASCADE)
+    day = models.DateField(verbose_name='日期')
+    capital = models.DecimalField(verbose_name='资金', max_digits=12, decimal_places=2)
+    unit_count = models.IntegerField(verbose_name='单位乘数', null=True)
+    NAV = models.DecimalField(verbose_name='单位净值', max_digits=8, decimal_places=3, null=True)
+    accumulated = models.DecimalField(verbose_name='累计净值', max_digits=8, decimal_places=3, null=True)
+    dividend = models.DecimalField(verbose_name='分红', max_digits=12, decimal_places=2, null=True)
+
+    class Meta:
+        verbose_name = '绩效'
+        verbose_name_plural = '绩效列表'
+
+    def __str__(self):
+        return '{}-{}'.format(self.broker, self.NAV)
+
+
 class Strategy(models.Model):
-    broker = models.ForeignKey(Broker, verbose_name='券商', on_delete=models.CASCADE)
+    broker = models.ForeignKey(Broker, verbose_name='账户', on_delete=models.CASCADE)
     name = models.CharField(verbose_name='名称', max_length=64)
+    instruments = models.ManyToManyField('Instrument', verbose_name='交易品种')
 
     class Meta:
         verbose_name = '策略'
-        verbose_name_plural = '策略集合'
+        verbose_name_plural = '策略列表'
 
     def __str__(self):
         return '{}'.format(self.name)
+
+    def get_instruments(self):
+        return [inst for inst in self.instruments.all()]
+    get_instruments.short_description = '交易合约'
+    get_instruments.allow_tags = True
 
 
 class Param(models.Model):
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.CASCADE)
     code = models.CharField('参数名', max_length=64)
-    str_value = models.CharField('字符串值', max_length=128, null=True)
-    int_value = models.IntegerField('整数值', null=True)
-    float_value = models.DecimalField('浮点值', null=True, max_digits=12, decimal_places=3)
-    update_time = models.DateTimeField('更新时间')
+    str_value = models.CharField('字符串值', max_length=128, null=True, blank=True)
+    int_value = models.IntegerField('整数值', null=True, blank=True)
+    float_value = models.DecimalField('浮点值', null=True, max_digits=12, decimal_places=3, blank=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
         verbose_name = '策略参数'
-        verbose_name_plural = '策略参数集合'
+        verbose_name_plural = '策略参数列表'
 
     def __str__(self):
         return '{}: {} = {}'.format(
@@ -81,7 +107,7 @@ class Param(models.Model):
 
 
 class Order(models.Model):
-    broker = models.ForeignKey(Broker, verbose_name='券商', on_delete=models.CASCADE)
+    broker = models.ForeignKey(Broker, verbose_name='账户', on_delete=models.CASCADE)
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.SET_NULL, null=True, blank=True)
     order_ref = models.CharField('报单号', max_length=13)
     instrument = models.CharField('品种代码', max_length=8)
@@ -96,7 +122,7 @@ class Order(models.Model):
 
     class Meta:
         verbose_name = '报单'
-        verbose_name_plural = '报单集合'
+        verbose_name_plural = '报单列表'
 
     def __str__(self):
         return '{}-{}'.format(self.instrument, self.get_offset_flag_display())
@@ -113,19 +139,27 @@ class Instrument(models.Model):
 
     class Meta:
         verbose_name = '合约'
-        verbose_name_plural = '合约集合'
+        verbose_name_plural = '合约列表'
 
     def __str__(self):
-        return '{}.{}'.format(self.exchange, self.main_code)
+        return '{}.{}'.format(self.get_exchange_display(), self.name)
 
 
 class Signal(models.Model):
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.CASCADE)
     instrument = models.ForeignKey(Instrument, verbose_name='品种', on_delete=models.CASCADE)
-    type = models.CharField('信号类型', max_length=16)
+    type = models.CharField('信号类型', max_length=16, choices=SignalType.choices)
+    trigger_value = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='信号值', null=True)
     trigger_time = models.DateTimeField('发生时间')
-    priority = models.IntegerField('优先级')
+    priority = models.IntegerField('优先级', choices=PriorityType.choices, default=PriorityType.Normal)
     processed = models.BooleanField('已处理', default=False)
+
+    class Meta:
+        verbose_name = '信号'
+        verbose_name_plural = '信号列表'
+
+    def __str__(self):
+        return '{}-{}-{}'.format(self.strategy, self.instrument, self.type)
 
 
 class MainBar(models.Model):
@@ -143,10 +177,15 @@ class MainBar(models.Model):
 
     class Meta:
         verbose_name = '主力连续日K线'
-        verbose_name_plural = '主力连续日K线集合'
+        verbose_name_plural = '主力连续日K线列表'
 
     def __str__(self):
         return '{}.{}'.format(self.exchange, self.product_code)
+
+
+# class Indicator(models.Model):
+#     main_bar = models.ForeignKey(MainBar, verbose_name='主连K线', on_delete=models.CASCADE)
+#
 
 
 class DailyBar(models.Model):
@@ -163,16 +202,17 @@ class DailyBar(models.Model):
 
     class Meta:
         verbose_name = '日K线'
-        verbose_name_plural = '日K线集合'
+        verbose_name_plural = '日K线列表'
 
     def __str__(self):
         return '{}.{}'.format(self.exchange, self.code)
 
 
 class Trade(models.Model):
-    broker = models.ForeignKey(Broker, verbose_name='券商', on_delete=models.CASCADE)
+    broker = models.ForeignKey(Broker, verbose_name='账户', on_delete=models.CASCADE)
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.SET_NULL, null=True, blank=True)
-    open_order = models.ForeignKey(Order, verbose_name='开仓报单', on_delete=models.CASCADE, related_name='open_order')
+    open_order = models.ForeignKey(Order, verbose_name='开仓报单', on_delete=models.CASCADE,
+                                   related_name='open_order', null=True, blank=True)
     close_order = models.ForeignKey(Order, verbose_name='平仓报单', on_delete=models.CASCADE,
                                     related_name='close_order', null=True, blank=True)
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
@@ -184,13 +224,13 @@ class Trade(models.Model):
     filled_shares = models.IntegerField('已成交手数', null=True, blank=True)
     avg_entry_price = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓均价')
     avg_exit_price = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='平仓均价', null=True, blank=True)
-    profit = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓盈亏')
-    frozen_margin = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='冻结保证金')
-    cost = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='手续费')
+    profit = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='持仓盈亏', null=True)
+    frozen_margin = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='冻结保证金', null=True)
+    cost = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='手续费', null=True)
 
     class Meta:
         verbose_name = '交易记录'
-        verbose_name_plural = '交易记录集合'
+        verbose_name_plural = '交易记录列表'
 
     def __str__(self):
         return '{}-{}手'.format(self.instrument, self.shares)
