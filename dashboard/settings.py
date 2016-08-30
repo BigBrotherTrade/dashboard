@@ -160,4 +160,4 @@ CELERYBEAT_SCHEDULE = {
 CURRENT_STRATEGY = '大哥2.0'
 if sys.platform == 'linux':
     DEBUG = False
-    ALLOWED_HOSTS = ['hk.timercrack.me']
+    ALLOWED_HOSTS = ['hk.timercrack.me', 'localhost', '127.0.0.1']
