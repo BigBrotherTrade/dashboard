@@ -15,17 +15,6 @@
 # under the License.
 from djchoices import DjangoChoices, C
 
-CFFEX_QUOTE_FORMAT = 'http://stock2.finance.sina.com.cn/futures/api/json.php/CffexFuturesService.getCffexFuturesDailyKLine?symbol={}'
-"""
-[["2016-01-18","2734.6","2816.8","2714.4","2743","194"], ...
-"""
-
-OTHER_QUOTE_FORMAT = 'http://stock.finance.sina.com.cn/futures/api/json.php/InnerFuturesService.getInnerFuturesDailyKLine?symbol={}'
-
-"""
-[{date:"2016-01-18",open:"1530.000",high:"1558.000",low:"1530.000",close:"1556.000",volume:"166234"}, ...
-"""
-
 
 class ContractType(DjangoChoices):
     STOCK = C(label='股票')
@@ -92,3 +81,17 @@ DCE_NAME_CODE = {
     '聚氯乙烯': 'v',
     '豆油': 'y',
 }
+
+
+class SignalType(DjangoChoices):
+    ROLLOVER = C(label='换月移仓')
+    BUY = C(label='买开')
+    SELL_SHORT = C(label='卖开')
+    SELL = C(label='卖平')
+    BUY_COVER = C(label='买平')
+
+
+class PriorityType(DjangoChoices):
+    LOW = C(label='低', value=0)
+    Normal = C(label='普通', value=1)
+    High = C(label='高', value=2)

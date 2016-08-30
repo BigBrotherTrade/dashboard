@@ -12,4 +12,6 @@ beautifulsoup4
 lxml
 requests
 numpy
+pandas
 TA-Lib
+appdirs
