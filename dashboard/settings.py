@@ -150,12 +150,13 @@ CELERY_ACCEPT_CONTENT = ['json', 'msgpack', 'yaml']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ['panel.tasks']
 CELERYBEAT_SCHEDULE = {
-    '每天下午4点更新合约': {
+    '每天下午5点更新合约': {
         'task': 'panel.tasks.collect_quote',
-        'schedule': crontab(hour=16, minute=0),
+        'schedule': crontab(hour=17, minute=0),
         # 'schedule': timedelta(minutes=1),
-        'options': {'expires': 60},
+        'options': {'expires': 600},
     },
 }
+CURRENT_STRATEGY = '大哥2.0'
 if sys.platform == 'linux':
     DEBUG = False
