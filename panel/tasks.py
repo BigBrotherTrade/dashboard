@@ -29,8 +29,9 @@ from bs4 import BeautifulSoup
 import numpy as np
 import talib
 
-from django.db.models import F
+from django.db.models import F, Q, Max, Min
 from dashboard import app
+from dashboard.settings import CURRENT_STRATEGY
 from panel.models import *
 
 logger = logging.getLogger('panel.tasks')
@@ -49,20 +50,26 @@ def collect_quote(_):
     """
     logger.info('start collect_quote')
     try:
-        if not is_trading_day():
+        day = datetime.datetime.today() - datetime.timedelta(days=1)
+        day = day.replace(tzinfo=pytz.FixedOffset(480))
+        if not is_trading_day(day):
             logger.info('今日是非交易日, 不计算任何数据。')
             return
-        fetch_today_bars()
+        fetch_daily_bar(day, 'SHFE')
+        fetch_daily_bar(day, 'DCE')
+        fetch_daily_bar(day, 'CZCE')
+        fetch_daily_bar(day, 'CFFEX')
         inst_dict, trading_set = get_newest_inst()
         update_inst_margin_fee(trading_set)
         for code, data in inst_dict.items():
+            print('process ', code)
             inst_obj, created = Instrument.objects.update_or_create(product_code=code, defaults={
                 'exchange': data['exchange'],
                 'name': data['name'],
                 'all_inst': ','.join(sorted(trading_set[code]))
             })
-            calc_main_inst(inst_obj)
-            calc_signal(inst_obj)
+            calc_main_inst(inst_obj, day)
+            calc_signal(inst_obj, day)
     except Exception as e:
         logger.error('collect_quote failed: %s', e, exc_info=True)
     logger.info('collect_quote done!')
@@ -107,7 +114,8 @@ def get_newest_inst():
     return inst_dict, inst_set
 
 
-def calc_main_inst(inst: Instrument, day: datetime.datetime=datetime.datetime.today()):
+def calc_main_inst(inst: Instrument, day: datetime.datetime=datetime.datetime.today().replace(
+        tzinfo=pytz.FixedOffset(480))):
     """
     [["2016-07-18","2116.000","2212.000","2106.000","2146.000","34"],...]
     """
@@ -205,14 +213,78 @@ def store_main_bar(bar: DailyBar):
             'open_interest': bar.open_interest})
 
 
-def calc_signal(inst):
-    talib.ATR()
+def calc_signal(inst: Instrument, day: datetime.datetime=datetime.datetime.today().replace(
+        tzinfo=pytz.FixedOffset(480))):
+    strategy = Strategy.objects.get(name=CURRENT_STRATEGY)
+    if inst not in strategy.instruments.all():
+        return
+    break_n = strategy.param_set.get(code='BreakPeriod').int_value
+    atr_n = strategy.param_set.get(code='AtrPeriod').int_value
+    long_n = strategy.param_set.get(code='LongPeriod').int_value
+    short_n = strategy.param_set.get(code='ShortPeriod').int_value
+    stop_n = strategy.param_set.get(code='StopLoss').int_value
+    # risk = strategy.param_set.get(code='Risk').float_value
+    last_bars = MainBar.objects.filter(
+        exchange=inst.exchange, product_code=inst.product_code, time__lte=day
+    ).order_by('time').values_list('open', 'high', 'low', 'close')
+    arr = np.array(last_bars, dtype=float)
+    close = arr[-1, 3]
+    atr = talib.ATR(arr[:, 1], arr[:, 2], arr[:, 3], timeperiod=atr_n)[-1]
+    short_trend = talib.SMA(arr[:, 3], timeperiod=short_n)[-1]
+    long_trend = talib.SMA(arr[:, 3], timeperiod=long_n)[-1]
+    buy_sig = short_trend > long_trend and close >= np.amax(arr[-break_n:, 3])
+    sell_sig = short_trend < long_trend and close <= np.amin(arr[-break_n:, 3])
+    roll_over = inst.change_time.date() == day.date()
+    if roll_over:
+        cur_code = inst.last_main
+    else:
+        cur_code = inst.main_code
+    # 查询该品种目前持有的仓位, 条件是开仓时间<=今天, 尚未未平仓或今天以后平仓(回测用)
+    pos = Trade.objects.filter(
+        Q(close_time__isnull=True) | Q(close_time__gt=day),
+        exchange=inst.exchange, instrument=cur_code, shares__gt=0, open_time__lt=day).first()
+    signal = None
+    signal_value = None
+    if pos is not None:
+        # 多头持仓
+        if pos.direction == DirectionType.LONG:
+            hh = float(MainBar.objects.filter(
+                exchange=inst.exchange, product_code=re.findall('[A-Za-z]+', pos.instrument)[0],
+                time__gte=pos.open_time, time__lte=day).aggregate(Max('high'))['high__max'])
+            # 多头止损
+            if close <= hh - atr * stop_n:
+                signal = SignalType.SELL
+                signal_value = hh - atr * stop_n
+            # 多头换月
+            elif roll_over:
+                signal = SignalType.ROLLOVER
+        # 空头持仓
+        else:
+            ll = float(MainBar.objects.filter(exchange=inst.exchange, product_code=re.findall('[A-Za-z]+', pos.instrument)[0], time__gte=pos.open_time, time__lte=day).aggregate(Min('low'))['low__min'])
+            # 空头止损
+            if close >= ll + atr * stop_n:
+                signal = SignalType.BUY_COVER
+                signal_value = ll + atr * stop_n
+            # 空头换月
+            elif roll_over:
+                signal = SignalType.ROLLOVER
+    # 做多
+    elif buy_sig:
+        signal = SignalType.BUY
+        signal_value = atr
+    # 做空
+    elif sell_sig:
+        signal = SignalType.SELL_SHORT
+        signal_value = atr
+    if signal is not None:
+        Signal.objects.update_or_create(
+            strategy_id=1, instrument=inst, type=signal, trigger_time=day, defaults={
+                'trigger_value': signal_value, 'priority': PriorityType.Normal, 'processed': False})
 
 
 def fetch_daily_bar(day: datetime.datetime, market: str):
     error_data = None
     try:
-        day = day.replace(tzinfo=pytz.FixedOffset(480))
         day_str = day.strftime('%Y%m%d')
         if market == ExchangeType.SHFE:
             rst = requests.get('http://www.shfe.com.cn/data/dailydata/kx/kx{}.dat'.format(day_str))
