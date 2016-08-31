@@ -38,9 +38,35 @@ logger = logging.getLogger('panel.tasks')
 
 
 @app.task(bind=True)
+def refresh_instrument(_):
+    """
+    各品种的交易合约更新（ctp）
+    """
+    try:
+        day = datetime.datetime.today()
+        day = day.replace(tzinfo=pytz.FixedOffset(480))
+        if not is_trading_day(day):
+            logger.info('今日是非交易日, 不更新任何数据。')
+            return
+        logger.info('获取CTP合约基本信息..')
+        inst_dict, trading_set = get_newest_inst()
+        logger.info('获取CTP合约保证金、手续费..')
+        update_inst_margin_fee(trading_set)
+        for code, data in inst_dict.items():
+            logger.info('更新合约信息: %s', code)
+            Instrument.objects.update_or_create(product_code=code, defaults={
+                'exchange': data['exchange'],
+                'name': data['name'],
+                'all_inst': ','.join(sorted(trading_set[code]))
+            })
+    except Exception as e:
+        logger.error('refresh_instrument failed: %s', e, exc_info=True)
+    logger.info('合约列表更新完毕!')
+
+
+@app.task(bind=True)
 def collect_quote(_):
     """
-    各品种的交易合约更新（ctp，新浪）
     各品种的主联合约：计算基差，主联合约复权（新浪）
     资金曲线（ctp）
     各品种换月标志
@@ -59,17 +85,8 @@ def collect_quote(_):
         fetch_daily_bar(day, 'DCE')
         fetch_daily_bar(day, 'CZCE')
         fetch_daily_bar(day, 'CFFEX')
-        logger.info('获取CTP合约基本信息..')
-        inst_dict, trading_set = get_newest_inst()
-        logger.info('获取CTP合约保证金、手续费..')
-        update_inst_margin_fee(trading_set)
-        for code, data in inst_dict.items():
-            logger.info('计算连续合约, 交易信号: %s', code)
-            inst_obj, created = Instrument.objects.update_or_create(product_code=code, defaults={
-                'exchange': data['exchange'],
-                'name': data['name'],
-                'all_inst': ','.join(sorted(trading_set[code]))
-            })
+        for inst_obj in Instrument.objects.all():
+            logger.info('计算连续合约, 交易信号: %s', inst_obj.name)
             calc_main_inst(inst_obj, day)
             calc_signal(inst_obj, day)
     except Exception as e:
