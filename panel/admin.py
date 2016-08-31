@@ -61,12 +61,12 @@ class DailyBarAdmin(admin.ModelAdmin):
 @admin.register(Trade)
 class TradeAdmin(admin.ModelAdmin):
     list_display = (
-        'strategy', 'instrument', 'shares', 'direction', 'open_time', 'close_time', 'avg_entry_price', 'avg_exit_price',
-        'profit')
+        'strategy', 'instrument', 'shares', 'direction', 'open_time', 'close_time',
+        'avg_entry_price', 'avg_exit_price', 'profit', 'frozen_margin')
 
 
 @admin.register(Param)
-class TradeAdmin(admin.ModelAdmin):
+class ParamAdmin(admin.ModelAdmin):
     list_display = (
         'strategy', 'update_time', 'code', 'str_value', 'int_value', 'float_value')
     search_fields = ('code',)

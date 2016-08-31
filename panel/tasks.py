@@ -43,22 +43,16 @@ def refresh_instrument(_):
     各品种的交易合约更新（ctp）
     """
     try:
-        day = datetime.datetime.today()
-        day = day.replace(tzinfo=pytz.FixedOffset(480))
-        if not is_trading_day(day):
-            logger.info('今日是非交易日, 不更新任何数据。')
-            return
         logger.info('获取CTP合约基本信息..')
         inst_dict, trading_set = get_newest_inst()
-        logger.info('获取CTP合约保证金、手续费..')
-        update_inst_margin_fee(trading_set)
         for code, data in inst_dict.items():
-            logger.info('更新合约信息: %s', code)
-            Instrument.objects.update_or_create(product_code=code, defaults={
+            logger.info('更新合约保证金手续费: %s', code)
+            inst, _ = Instrument.objects.update_or_create(product_code=code, defaults={
                 'exchange': data['exchange'],
                 'name': data['name'],
                 'all_inst': ','.join(sorted(trading_set[code]))
             })
+            update_inst_margin(inst)
     except Exception as e:
         logger.error('refresh_instrument failed: %s', e, exc_info=True)
     logger.info('合约列表更新完毕!')
@@ -94,13 +88,37 @@ def collect_quote(_):
     logger.info('盘后计算完毕!')
 
 
-def update_inst_margin_fee(inst_set):
+def update_inst_margin(inst):
     """
-    更新每一个合约的保证金和手续费
+    更新每一个合约的保证金
     :param inst_set:
     :return:
     """
-    pass
+    """
+    从CTP获取正在交易的所有合约
+    :return: 品种信息, 每个品种的正在交易的合约集合
+    """
+    redis_client = redis.StrictRedis()
+    pubs = redis_client.pubsub()
+    pubs.psubscribe('MSG:CTP:RSP:TRADE:OnRspQryInstrument:1')
+    regex = re.compile('(.*?)([0-9]+)$')
+    redis_client.publish('MSG:CTP:REQ:ReqQryInstrument', json.dumps({
+        'RequestID': 1,
+    }))
+    for message in pubs.listen():
+        if message['type'] != 'pmessage':
+            continue
+        inst = json.loads(message['data'].decode('utf8'))
+        if not inst['empty']:
+            if inst['IsTrading'] == 1:
+                inst_set[inst['ProductID']].add(inst['InstrumentID'])
+                inst_dict[inst['ProductID']]['exchange'] = inst['ExchangeID']
+                inst_dict[inst['ProductID']]['product_code'] = inst['ProductID']
+                if 'name' not in inst_dict[inst['ProductID']]:
+                    inst_dict[inst['ProductID']]['name'] = regex.match(inst['InstrumentName']).group(1)
+        if inst['bIsLast']:
+            break
+    return inst_dict, inst_set
 
 
 def get_newest_inst():
@@ -165,6 +183,7 @@ def calc_main_inst(inst: Instrument, day: datetime.datetime=datetime.datetime.to
         else:
             check_bar = None
 
+    # 之前没有主力合约, 取当前成交量最大的作为主力
     if inst.main_code is None:
         if check_bar is None:
             check_bar = DailyBar.objects.filter(
@@ -174,6 +193,7 @@ def calc_main_inst(inst: Instrument, day: datetime.datetime=datetime.datetime.to
         inst.change_time = day
         inst.save(update_fields=['main_code', 'change_time'])
         store_main_bar(check_bar)
+    # 主力合约发生变化, 做换月处理
     elif check_bar is not None and inst.main_code != check_bar.code and check_bar.code > inst.main_code:
         inst.last_main = inst.main_code
         inst.main_code = check_bar.code
