@@ -52,7 +52,7 @@ def refresh_instrument(_):
                 'name': data['name'],
                 'all_inst': ','.join(sorted(trading_set[code]))
             })
-            update_inst_margin(inst)
+            # update_inst_margin(inst)
     except Exception as e:
         logger.error('refresh_instrument failed: %s', e, exc_info=True)
     logger.info('合约列表更新完毕!')
