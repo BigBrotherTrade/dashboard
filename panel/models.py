@@ -136,10 +136,13 @@ class Instrument(models.Model):
     main_code = models.CharField('主力合约', max_length=16, null=True, blank=True)
     last_main = models.CharField('上个主力合约', max_length=16, null=True, blank=True)
     change_time = models.DateTimeField('切换时间', null=True, blank=True)
+    night_trade = models.BooleanField('夜盘交易', default=False)
     volume_multiple = models.IntegerField('合约乘数', null=True, blank=True)
     margin_rate = models.DecimalField('保证金率', max_digits=6, decimal_places=5, null=True, blank=True)
     fee_money = models.DecimalField('金额手续费', max_digits=6, decimal_places=5, null=True, blank=True)
     fee_volume = models.DecimalField('手数手续费', max_digits=6, decimal_places=2, null=True, blank=True)
+    up_limit_ratio = models.DecimalField('涨停幅度', max_digits=3, decimal_places=2, null=True, blank=True)
+    down_limit_ratio = models.DecimalField('跌停幅度', max_digits=3, decimal_places=2, null=True, blank=True)
 
     class Meta:
         verbose_name = '合约'
