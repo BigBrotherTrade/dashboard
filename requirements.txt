@@ -1,15 +1,10 @@
 django
 mysqlclient
 django-choices
-celery
 pytz
-aioredis
 ujson
 redis
-aiohttp
 tqdm
-beautifulsoup4
-lxml
 requests
 numpy
 pandas
