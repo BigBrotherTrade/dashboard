@@ -14,9 +14,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 from django.contrib import admin
+from django.conf.locale.zh_Hans import formats as zh_formats
 
 from .forms import BrokerForm
 from .models import *
+
+zh_formats.DATETIME_FORMAT = "Y-m-d H:i:s"
 
 
 @admin.register(Address)
@@ -44,8 +47,9 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(Instrument)
 class InstrumentAdmin(admin.ModelAdmin):
     list_display = ('exchange', 'name', 'product_code', 'night_trade', 'main_code',
-                    'last_main', 'change_time')
-    ordering = ['exchange', ]
+                    'last_main', 'change_time', 'up_limit_ratio', 'down_limit_ratio',
+                    'margin_rate', 'fee_money', 'fee_volume')
+    ordering = ['-exchange', ]
 
 
 @admin.register(MainBar)
