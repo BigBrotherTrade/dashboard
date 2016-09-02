@@ -104,7 +104,7 @@ LOGGING = {
         'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'my_formatter'},
     },
     'loggers': {
-        'monitor': {'handlers': ['file', 'console']}
+        'panel': {'handlers': ['file', 'console']}
     }
 }
 
@@ -144,23 +144,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
-CELERY_ACCEPT_CONTENT = ['json', 'msgpack', 'yaml']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ['panel.tasks']
-CELERYBEAT_SCHEDULE = {
-    '每天下午3点半更新合约列表': {
-        'task': 'panel.tasks.refresh_instrument',
-        'schedule': crontab(hour=15, minute=30),
-        'options': {'expires': 1200},
-    },
-    '每天下午5点收市计算': {
-        'task': 'panel.tasks.collect_quote',
-        'schedule': crontab(hour=17, minute=0),
-        'options': {'expires': 1200},
-    },
-}
 CURRENT_STRATEGY = '大哥2.0'
 if sys.platform == 'linux':
     DEBUG = False
