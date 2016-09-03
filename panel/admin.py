@@ -47,8 +47,8 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(Instrument)
 class InstrumentAdmin(admin.ModelAdmin):
     list_display = ('exchange', 'name', 'product_code', 'night_trade', 'main_code',
-                    'last_main', 'change_time', 'up_limit_ratio', 'down_limit_ratio',
-                    'margin_rate', 'fee_money', 'fee_volume')
+                    'last_main', 'change_time', 'up_limit_ratio',
+                    'margin_rate', 'fee_money', 'fee_volume', 'price_tick')
     ordering = ['-exchange', ]
 
 
