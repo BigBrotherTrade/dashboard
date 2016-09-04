@@ -54,7 +54,8 @@ class InstrumentAdmin(admin.ModelAdmin):
 
 @admin.register(MainBar)
 class MainBarAdmin(admin.ModelAdmin):
-    list_display = ('product_code', 'cur_code', 'time', 'open', 'high', 'low', 'close', 'volume', 'open_interest', 'basis')
+    list_display = ('product_code', 'cur_code', 'time', 'open', 'high', 'low', 'close',
+                    'volume', 'open_interest', 'basis')
     search_fields = ('product_code', 'cur_code', 'time',)
 
 
@@ -66,8 +67,8 @@ class DailyBarAdmin(admin.ModelAdmin):
 @admin.register(Trade)
 class TradeAdmin(admin.ModelAdmin):
     list_display = (
-        'strategy', 'instrument', 'shares', 'direction', 'open_time', 'close_time',
-        'avg_entry_price', 'avg_exit_price', 'profit', 'frozen_margin')
+        'broker', 'strategy', 'instrument', 'code', 'shares', 'direction', 'open_time', 'close_time',
+        'avg_entry_price', 'avg_exit_price', 'profit', 'frozen_margin', 'cost')
 
 
 @admin.register(Param)
@@ -80,7 +81,8 @@ class ParamAdmin(admin.ModelAdmin):
 @admin.register(Signal)
 class SignalAdmin(admin.ModelAdmin):
     list_display = (
-        'strategy', 'instrument', 'type', 'trigger_value', 'trigger_time', 'priority', 'processed')
+        'strategy', 'instrument', 'type', 'trigger_value', 'price', 'volume',
+        'trigger_time', 'priority', 'processed')
     search_fields = ('instrument',)
 
 
