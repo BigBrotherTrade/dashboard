@@ -89,5 +89,5 @@ class SignalAdmin(admin.ModelAdmin):
 @admin.register(Performance)
 class PerformanceAdmin(admin.ModelAdmin):
     list_display = (
-        'broker', 'day', 'capital', 'unit_count', 'NAV', 'accumulated', 'dividend')
+        'broker', 'day', 'capital', 'unit_count', 'NAV', 'accumulated', 'dividend', 'used_margin')
     search_fields = ('day',)
