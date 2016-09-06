@@ -75,6 +75,7 @@ class Strategy(models.Model):
     broker = models.ForeignKey(Broker, verbose_name='账户', on_delete=models.CASCADE)
     name = models.CharField(verbose_name='名称', max_length=64)
     instruments = models.ManyToManyField('Instrument', verbose_name='交易品种')
+    force_opens = models.ManyToManyField('Instrument', verbose_name='手动开仓', related_name='force_opens')
 
     class Meta:
         verbose_name = '策略'
@@ -87,6 +88,11 @@ class Strategy(models.Model):
         return [inst for inst in self.instruments.all()]
     get_instruments.short_description = '交易合约'
     get_instruments.allow_tags = True
+
+    def get_force_opens(self):
+        return [inst for inst in self.force_opens.all()]
+    get_force_opens.short_description = '手动开仓'
+    get_force_opens.allow_tags = True
 
 
 class Param(models.Model):

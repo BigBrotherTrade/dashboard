@@ -36,7 +36,7 @@ class BrokerAdmin(admin.ModelAdmin):
 
 @admin.register(Strategy)
 class StrategyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'broker', 'get_instruments')
+    list_display = ('name', 'broker', 'get_instruments', 'get_force_opens')
 
 
 @admin.register(Order)
