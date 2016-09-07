@@ -45,10 +45,9 @@ class DirectionType(DjangoChoices):
 
 
 class OffsetFlag(DjangoChoices):
-    BUY = C(label='买开')
-    SELL = C(label='卖平')
-    SELL_SHORT = C(label='卖开')
-    BUY_COVER = C(label='买平')
+    OPEN = C(label='开')
+    CLOSE = C(label='平')
+    CLOSE_TODAY = C(label='平今')
 
 
 class OrderStatus(DjangoChoices):
@@ -80,6 +79,21 @@ DCE_NAME_CODE = {
     '聚丙烯': 'pp',
     '聚氯乙烯': 'v',
     '豆油': 'y',
+}
+
+MONTH_CODE = {
+    1: "F",
+    2: "G",
+    3: "H",
+    4: "J",
+    5: "K",
+    6: "M",
+    7: "N",
+    8: "Q",
+    9: "U",
+    10: "V",
+    11: "X",
+    12: "Z"
 }
 
 

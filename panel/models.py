@@ -89,11 +89,6 @@ class Strategy(models.Model):
     get_instruments.short_description = '交易合约'
     get_instruments.allow_tags = True
 
-    def get_force_opens(self):
-        return [inst for inst in self.force_opens.all()]
-    get_force_opens.short_description = '手动开仓'
-    get_force_opens.allow_tags = True
-
 
 class Param(models.Model):
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.CASCADE)
