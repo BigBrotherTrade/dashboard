@@ -97,8 +97,20 @@ MONTH_CODE = {
 }
 
 
+KT_MARKET = {
+    'DL': 'DCE',
+    'DY': 'DCE',
+    'SQ': 'SHFE',
+    'SY': 'SHFE',
+    'ZJ': 'CFFEX',
+    'ZZ': 'CZCE',
+    'ZY': 'CZCE',
+}
+
+
 class SignalType(DjangoChoices):
-    ROLLOVER = C(label='换月移仓')
+    ROLL_CLOSE = C(label='换月平旧')
+    ROLL_OPEN = C(label='换月开新')
     BUY = C(label='买开')
     SELL_SHORT = C(label='卖开')
     SELL = C(label='卖平')
