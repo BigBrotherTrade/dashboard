@@ -18,6 +18,7 @@ from django.conf.urls import url
 from .views import *
 
 urlpatterns = [
-    # test
-    # url(r'^charts/(?P<graph_type>(\w+))/(?P<tmp_graph_id>(\d+))/$', ChartsView.as_view(), name="charts_view"),
+    url(r'^$', PerformanceView.as_view(
+        template_name='panel/index.html'), name="performance_view"),
+    url(r'^nav_data$', nav_data, name='get_nav_data'),
 ]

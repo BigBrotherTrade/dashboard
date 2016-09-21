@@ -1,0 +1,9 @@
+{% extends 'global/base_site.html' %}
+{% load static %}
+{% block extrajs %}
+    {{ block.super }}
+    <script src="{% static 'js/nav.js' %}"></script>
+{% endblock %}
+{% block content %}
+    <div id="main" style="width: 1300px;height:500px;"></div>
+{% endblock %}

@@ -78,3 +78,5 @@ target/
 #*/migrations/0*
 #
 venv
+
+.project

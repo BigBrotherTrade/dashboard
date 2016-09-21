@@ -1,0 +1,52 @@
+{% load custom_tag %}
+{% if paginator %}
+    <div class="container-fluid" id="split-page">
+        <div class="page_size">
+            共<span>&nbsp;{{ paginator.count }}&nbsp;</span>条
+            <label for="page_size">每页条数</label>
+            <select id="page_size">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+        <ul class="pagination" style="float: right">
+            {% if page_obj.has_previous %}
+                <li><a href="?page={{ page_obj.previous_page_number }}{{ request | format_query_string }}"
+                       aria-label="Previous"><span
+                        aria-hidden="true">&laquo;</span></a></li>
+            {% endif %}
+            {% for number in paginator.page_range %}
+                {% if paginator.num_pages <= 14 %}
+                    <li {% if number == page_obj.number %}class="active"{% endif %}>
+                        <a href="?page={{ number }}{{ request | format_query_string }}">{{ number }}</a>
+                    </li>
+                {% else %}
+                    {% if number|add:"5" > page_obj.number and number|add:"-5" < page_obj.number %}
+                        <li {% if number == page_obj.number %}class="active"{% endif %}>
+                            <a href="?page={{ number }}{{ request | format_query_string }}">{{ number }}</a>
+                        </li>
+                    {% elif number|add:"5" == page_obj.number or number|add:"-5" == page_obj.number %}
+                        <li class="disabled">
+                            <a>...</a>
+                        </li>
+                    {% elif number <= 3 %}
+                        <li>
+                            <a href="?page={{ number }}{{ request | format_query_string }}">{{ number }}</a>
+                        </li>
+                    {% elif number|add:"3" > paginator.num_pages %}
+                        <li>
+                            <a href="?page={{ number }}{{ request | format_query_string }}">{{ number }}</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}{{ request | format_query_string }}"
+                       aria-label="Next"><span
+                        aria-hidden="true">&raquo;</span></a></li>
+            {% endif %}
+        </ul>
+    </div>
+{% endif %}

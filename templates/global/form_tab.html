@@ -1,0 +1,55 @@
+{% extends "global/base_site.html" %}
+{% load static %}
+
+{% block content %}
+    <!-- 表单栏 -->
+    <div class="col-md-12 col-sm-12 col-xs-12 {% block form_style %}{% endblock %}">
+        <div class="x_panel">
+            <div class="x_content">
+                <form class="form-inline" method="post"
+                      id="{% block form_id %}{% endblock %}"
+                      action="{% block form_url %}{% endblock %}">
+                    {% csrf_token %}
+                    {% block form_fields %}
+                        {% for field in form %}
+                            <div class="form-group" style="margin-right: 20px">
+                                {{ field.errors }}
+                                <label for="{{ field.id_for_label }}">{{ field.label_tag }}</label>
+                                {% if 'dept-prj-tree' in field.field.widget.attrs.class %}
+                                    <div class="form-control dept-prj-tree-mask"><span class="dept-prj-tree-text">{{ field.display_name }}</span><span class="caret"></span></div>
+                                    <input type="hidden" value="" name="dept_prj_name" id="dept_prj_name">
+                                    <input type="hidden" value="" name="dept_prj_type" id="dept_prj_type">
+                                {% endif %}
+                                {{ field }}
+                            </div>
+                        {% endfor %}
+                    {% endblock %}
+                    {% block form_submit %}
+                        <button class="btn btn-primary" type="submit" id="save">
+                            <span class="glyphicon glyphicon-save"></span>保存
+                        </button>
+                    {% endblock %}
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- TAB栏 -->
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+            <div class="x_content">
+                <div class="" role="tabpanel" data-example-id="togglable-tabs">
+                    <ul id="form_tab_head" class="nav nav-tabs bar_tabs" role="tablist">
+                        {% block tab_head %}{% endblock %}
+                    </ul>
+                    <!-- 自定义栏 -->
+                    <div id="form_tab_content" class="tab-content">
+                        <div role="tabpanel" class="tab-pane fade active in" id="tab_content1"
+                             aria-labelledby="home-tab">
+                            {% block tab_content %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

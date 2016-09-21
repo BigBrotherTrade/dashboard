@@ -1,0 +1,16 @@
+{% extends 'global/base_site.html' %}
+{% load static %}
+{% block breadcrumb %}
+{% endblock %}
+{% block content %}
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+            <div class="x_content">
+                <form class="form-inline" method="post"
+                      action="{% block form_url %}{% endblock %}">
+                    {% include 'global/form_edit_content.html' %}
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>和弦基金</title>
+    <link rel="icon" href="{% static 'image/favicon.ico' %}">
+    <link rel="stylesheet" href="{% static "third_part/bootstrap-3.3.7/css/bootstrap.min.css" %}">
+    <link rel="stylesheet" href="{% static "third_part/bootstrap-3.3.7/css/bootstrap-theme.min.css" %}">
+    {% block extracss %}{% endblock %}
+</head>
+<body>
+{% include 'global/top_navbar.html' %}
+{% block content %}{% endblock %}
+<div class="container theme-showcase" role="main">
+    <footer class="modal-footer">
+        <p>© 2016 V2.0 timercrack.me All Rights Reserved. timercrack 版权所有</p>
+    </footer>
+</div>
+<script src="{% static "third_part/jquery-3.1.0.min.js" %}"></script>
+<script src="{% static "third_part/bootstrap-3.3.7/js/bootstrap.min.js" %}"></script>
+<script src="{% static "third_part/echarts.min.js" %}"></script>
+{% block extrajs %}{% endblock %}
+</body>
+</html>

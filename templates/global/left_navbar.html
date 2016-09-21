@@ -1,0 +1,52 @@
+{% load static %}
+<div class="col-md-3 left_col">
+    <div class="left_col scroll-view">
+        <div class="navbar nav_title" style="border: 0;">
+            <a href="/" class="site_title">
+                <img id="logo" style="width: 50px;" src="{% static "global/images/logo_s.png" %}">
+            </a>
+        </div>
+        <div class="clearfix"></div>
+        <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+            <div class="menu_section">
+                <ul class="nav side-menu">
+                    <li><a><i class="fa fa-eye"></i>实时监控<span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu" style="display: none">
+                            <li><a href="{% url 'dashboard:problem_list' %}?status=PROBLEM">最新问题</a></li>
+                            <li><a href="{% url 'dashboard:statistic_list' %}">运行统计</a></li>
+                            <li><a href="{% url 'dashboard:screen_list' %}">图形监测</a></li>
+                            <li><a href="{% url 'dashboard:host_list' %}">主机监控</a></li>
+                        </ul>
+                    </li>
+{#                    <li><a><i class="fa fa-line-chart"></i>数据分析<span class="fa fa-chevron-down"></span></a>#}
+{#                        <ul class="nav child_menu" style="display: none">#}
+{#                            <li><a href="#">告警趋势分析</a></li>#}
+{#                            <li><a href="#">告警类型统计</a></li>#}
+{#                            <li><a href="#">告警合并统计</a></li>#}
+{#                            <li><a href="#">告警信息统计</a></li>#}
+{#                        </ul>#}
+{#                    </li>#}
+                    <li><a><i class="fa fa-cogs"></i>监控配置<span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu" style="display: none">
+                            <li><a href="{% url 'monitorconfig:project_list' %}">业务配置</a></li>
+                            <li><a href="{% url 'monitorconfig:module_list' %}">功能模块配置</a></li>
+                            <li><a href="{% url 'monitorconfig:template_list' %}">模板配置</a></li>
+                        </ul>
+                    </li>
+                    <li><a><i class="fa fa-user-secret"></i>运维专用<span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu" style="display: none">
+                            <li><a href="{% url 'opsmethod:auth_list' %}">权限配置</a></li>
+                            <li><a href="{% url 'opsmethod:log_list' %}">操作日志</a></li>
+                            <li><a href="{% url 'opsmethod:alarm_config_new' pk=1 %}">全局配置</a></li>
+                            <li><a href="{% url 'opsmethod:item_list' %}">监控项配置</a></li>
+                            <li><a href="{% url 'opsmethod:maintain_list' %}">维护配置</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- /sidebar menu -->
+        <!-- /menu footer buttons -->
+        <!-- /menu footer buttons -->
+    </div>
+</div>

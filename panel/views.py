@@ -13,6 +13,20 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
+from django.views.generic import TemplateView
 
-# Create your views here.
+from panel.models import Performance
+
+
+class PerformanceView(LoginRequiredMixin, TemplateView):
+    pass
+
+
+def nav_data(request):
+    q = Performance.objects.filter(broker__strategy__name='大哥2.0').order_by('-day').values_list('day', 'NAV')
+    l = []
+    for day, val in q:
+        l.append([day.isoformat(), float(val)])
+    return JsonResponse(l, safe=False)

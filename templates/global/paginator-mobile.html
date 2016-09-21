@@ -1,0 +1,15 @@
+{% load custom_tag %}
+{% if paginator %}
+    <div class="content-block">
+        <p class="buttons-row">
+            {% if page_obj.has_previous %}
+                <a class="button button-round"
+                   href="?page={{ page_obj.previous_page_number }}{{ request | format_query_string }}">上一页</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="button button-round"
+                   href="?page={{ page_obj.next_page_number }}{{ request | format_query_string }}">下一页</a>
+            {% endif %}
+        </p>
+    </div>
+{% endif %}
