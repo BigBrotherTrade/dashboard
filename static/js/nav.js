@@ -31,10 +31,16 @@ var option = {
         scale: true,
         boundaryGap: ['10%', '10%']
     },
+    // dataZoom: [
+    //     {   // 这个dataZoom组件，默认控制x轴。
+    //         type: 'slider', // 这个 dataZoom 组件是 slider 型 dataZoom 组件
+    //         start: 50,      // 左边在 10% 的位置。
+    //         end: 100         // 右边在 60% 的位置。
+    //     }
+    // ],
     series: [{
         name: '单位净值',
         type: 'line',
-        smooth: 'true',
         data: []
     }]
 };
@@ -46,9 +52,11 @@ $.get('/nav_data', function (rst) {
     myChart.setOption({
         series: [{
             name: '单位净值',
-            type: 'line',
-            smooth: 'true',
             data: rst
         }]
     });
+});
+
+$(window).on('resize', function () {
+    myChart.resize();
 });
