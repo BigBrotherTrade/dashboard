@@ -1,0 +1,146 @@
+// 基于准备好的dom，初始化echarts实例
+var myChart = echarts.init(document.getElementById('main'));
+
+option = {
+    backgroundColor: '#000000',
+    color: ['#ff0','#0f0', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'],
+    title: {
+        text: '交易信号',
+        left: 0,
+        textStyle: {
+            color: '#ffdf00'
+        }
+    },
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'line'
+        }
+    },
+    legend: {
+        data: [
+            '日K',
+            {
+                name: 'UP_LINE'
+            },
+            {
+                name: 'DOWN_LINE'
+            }
+        ],
+        selectedMode: false,
+        textStyle: {
+            color: '#fff'
+        }
+    },
+    xAxis: {
+        type: 'category',
+        data: [],
+        axisLine: {
+            lineStyle: {
+                color: '#9c0000'
+            }
+        },
+        splitLine: {show: false}
+    },
+    yAxis: {
+        type: 'value',
+        splitLine: {
+            lineStyle: {
+                color: '#9c0000'
+            }
+        },
+        axisLine: {
+            lineStyle: {
+                color: '#9c0000'
+            }
+        },
+        scale: true
+    },
+    dataZoom: [
+        {
+            show: true,
+            type: 'slider',
+            start: 80,
+            end: 100
+        }
+    ],
+    series: [
+        {
+            name: '日K',
+            type: 'candlestick',
+            data: [],
+            itemStyle: {
+                normal: {
+                    color: '#000000',
+                    color0: '#6be7ff',
+                    borderColor: '#ff4142',
+                    borderColor0: '#6be7ff'
+                }
+            },
+            markLine: {
+                symbol: ['none', 'none'],
+                label: {
+                    normal: {show: false},
+                    emphasis: {show: false}
+                },
+                lineStyle: {
+                    normal: {
+                        width: 3,
+                        type: 'solid',
+                        color: '#fff'
+                    }
+                },
+                data: []
+            }
+        },
+        {
+            name: 'UP_LINE',
+            type: 'line',
+            lineStyle: {normal: {width: 1, color: '#ff0'}},
+            showSymbol: false,
+            data: []
+        },
+        {
+            name: 'DOWN_LINE',
+            type: 'line',
+            lineStyle: {normal: {width: 1, color: '#0f0'}},
+            showSymbol: false,
+            data: []
+        }
+    ]
+};
+
+// 使用刚指定的配置项和数据显示图表。
+myChart.setOption(option);
+
+$.get('/bar_data?inst=' + $('#main').data('inst'), function (rst) {
+    myChart.setOption({
+        title: {
+            text: rst.title
+        },
+        xAxis: {
+            data: rst.x
+        },
+        series: [
+            {
+                name: '日K',
+                data: rst.k,
+                markLine: {
+                    data: rst.trade
+                }
+            },
+            {
+                name: 'UP_LINE',
+                data: rst.up
+            },
+            {
+                name: 'DOWN_LINE',
+                data: rst.down
+            }
+        ]
+    });
+});
+
+$(window).on('resize', function () {
+    myChart.resize();
+});

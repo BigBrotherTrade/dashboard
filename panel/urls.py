@@ -21,4 +21,8 @@ urlpatterns = [
     url(r'^$', PerformanceView.as_view(
         template_name='panel/index.html'), name="performance_view"),
     url(r'^nav_data$', nav_data, name='get_nav_data'),
+
+    url(r'^instrument/(?P<pk>(\d+))/$', InstrumentView.as_view(
+        template_name='panel/instrument.html'), name='instrument_view'),
+    url(r'^bar_data$', bar_data, name='get_bar_data'),
 ]
