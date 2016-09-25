@@ -27,7 +27,7 @@ class PerformanceView(LoginRequiredMixin, TemplateView):
 class InstrumentView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(InstrumentView, self).get_context_data(**kwargs)
-        context['object_list'] = Strategy.objects.get(name='大哥2.0').instruments.all()
+        context['object_list'] = Strategy.objects.get(name='大哥2.0').instruments.all().order_by('exchange')
         return context
 
 
