@@ -15,9 +15,14 @@
 # under the License.
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.generic import TemplateView
+import logging
+import pytz
 
 from panel.models import *
+
+logger = logging.getLogger('panel.view')
 
 
 class PerformanceView(LoginRequiredMixin, TemplateView):
@@ -40,37 +45,42 @@ def nav_data(request):
 
 
 def bar_data(request):
-    inst_id = request.GET['inst']
-    inst = Instrument.objects.get(id=inst_id)
-    break_n = Strategy.objects.first().param_set.get(code='BreakPeriod').int_value + 1
-    q = MainBar.objects.filter(product_code=inst.product_code).order_by('time').values_list(
-        'time', 'open', 'close', 'low', 'high')
-    rst = {'up': [], 'down': [], 'k': [], 'x': [], 'trade': [], 'title': str(inst)}
-    for day, oo, cc, ll, hh in q:
-        rst['x'].append(day.isoformat())
-        rst['k'].append([float(oo), float(cc), float(ll), float(hh)])
-        rst['up'].append(max(x[2] for x in rst['k'][-break_n:]))
-        rst['down'].append(min(x[2] for x in rst['k'][-break_n:]))
-    for t in Trade.objects.filter(
-            instrument_id=inst_id, cost__isnull=False).order_by('open_time'):
-        if t.close_time is None:
-            close_price = rst['k'][-1][1]
-            close_time = rst['x'][-1]
-        else:
-            close_price = t.avg_exit_price
-            close_time = t.close_time.date().isoformat()
-        rst['trade'].append([
-            {
-                'name': '{}至{} {}仓{}手'.format(
-                    t.open_time.date(), close_time, t.direction, t.shares),
-                'coord': [t.open_time.date().isoformat(), t.avg_entry_price],
-                'lineStyle': {
-                    'normal': {
-                        'color': '#00f' if t.profit > 0 else '#fff'
-                    }
+    try:
+        inst_id = request.GET['inst']
+        inst = Instrument.objects.get(id=inst_id)
+        break_n = Strategy.objects.first().param_set.get(code='BreakPeriod').int_value + 1
+        q = MainBar.objects.filter(product_code=inst.product_code).order_by('time').values_list(
+            'time', 'open', 'close', 'low', 'high')
+        rst = {'up': [], 'down': [], 'k': [], 'x': [], 'trade': [], 'title': str(inst)}
+        for day, oo, cc, ll, hh in q:
+            rst['x'].append(day.isoformat())
+            rst['k'].append([float(oo), float(cc), float(ll), float(hh)])
+            rst['up'].append(max(x[2] for x in rst['k'][-break_n:]))
+            rst['down'].append(min(x[2] for x in rst['k'][-break_n:]))
+        for t in Trade.objects.filter(instrument_id=inst_id).order_by('open_time'):
+            if t.close_time is None:
+                close_price = rst['k'][-1][1]
+                close_time = rst['x'][-1]
+                if t.profit is None:
+                    continue
+            else:
+                close_price = t.avg_exit_price
+                close_time = timezone.localtime(t.close_time, pytz.FixedOffset(480)).date().isoformat()
+            rst['trade'].append([
+                {
+                    'name': '{}至{} {}仓{}手'.format(
+                        t.open_time, close_time, t.direction, t.shares),
+                    'coord': [timezone.localtime(t.open_time, pytz.FixedOffset(480)).date().isoformat(),
+                              t.avg_entry_price],
+                    'lineStyle': {
+                        'normal': {
+                            'color': '#00f' if t.profit > 0 else '#fff'
+                        }
+                    },
                 },
-            },
-            {
-                'coord': [close_time, close_price]
-            }])
-    return JsonResponse(rst, safe=False)
+                {
+                    'coord': [close_time, close_price]
+                }])
+        return JsonResponse(rst, safe=False)
+    except Exception as e:
+        logger.error('bar_data failed: %s', e, exc_info=True)
