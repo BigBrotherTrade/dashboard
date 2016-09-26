@@ -60,7 +60,7 @@ option = {
         {
             show: true,
             type: 'slider',
-            start: 80,
+            start: 0,
             end: 100
         }
     ],
@@ -90,6 +90,7 @@ option = {
                         color: '#fff'
                     }
                 },
+                animation: false,
                 data: []
             }
         },
