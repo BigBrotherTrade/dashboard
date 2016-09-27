@@ -8,5 +8,5 @@ tqdm
 requests
 numpy
 pandas
-TA-Lib
 appdirs
+TA-Lib

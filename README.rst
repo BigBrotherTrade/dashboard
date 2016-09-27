@@ -36,6 +36,11 @@ dashboard
 	订单状态改变
 	成交回报
 
+INSTALL
+=======
+
+for centos: sudo yum install gcc libffi-devel python-devel openssl-devel
+先装talib的C库，再用pip装依赖
 
 License
 -------
