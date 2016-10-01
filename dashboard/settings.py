@@ -16,6 +16,8 @@ import sys
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from datetime import timedelta
 
+from appdirs import AppDirs
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -87,6 +89,7 @@ DATABASES = {
     },
 }
 
+app_dir = AppDirs('dashboard')
 LOGGING = {
     'version': 1,
     'formatters': {'my_formatter': {'format': '%(asctime)s %(name)s [%(levelname)s] %(message)s'}},
@@ -94,8 +97,8 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'dashboard.log',
-            'maxBytes': 1024 * 1024 * 20,  # 20 MB
+            'filename': os.path.join(app_dir.user_log_dir, 'dashboard.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'my_formatter',
         },
