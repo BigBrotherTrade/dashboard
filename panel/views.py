@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.utils import timezone
@@ -26,6 +27,10 @@ logger = logging.getLogger('panel.view')
 
 
 class PerformanceView(LoginRequiredMixin, TemplateView):
+    pass
+
+
+class CorrelationView(LoginRequiredMixin, TemplateView):
     pass
 
 
@@ -82,5 +87,29 @@ def bar_data(request):
                     'coord': [close_time, close_price]
                 }])
         return JsonResponse(rst, safe=False)
+    except Exception as e:
+        logger.error('bar_data failed: %s', e, exc_info=True)
+
+
+def corr_data(request):
+    try:
+        day = datetime.datetime.today()
+        price_dict = dict()
+        begin_day = day.replace(year=day.year - 1)
+        category = list()
+        for inst in Strategy.objects.get(name='大哥2.0').instruments.all():
+            category.append(inst.name)
+            price_dict[inst.product_code] = to_df(MainBar.objects.filter(
+                time__gte=begin_day.date(), exchange=inst.exchange,
+                product_code=inst.product_code).order_by('time').values_list('time', 'close'))
+            price_dict[inst.product_code].index = pd.DatetimeIndex(price_dict[inst.product_code].time)
+            price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
+        corr_pd = pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
+        length = corr_pd.shape[0]
+        return JsonResponse({
+            'index': category,
+            'title': '各品种{}至{}的相关性分析'.format(day.date(), begin_day.date()),
+            'data': [[i, j, corr_pd.iloc[i, j]] for i in list(range(length)) for j in list(range(length))]
+        }, safe=False)
     except Exception as e:
         logger.error('bar_data failed: %s', e, exc_info=True)
