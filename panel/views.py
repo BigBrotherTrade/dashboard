@@ -108,7 +108,7 @@ def corr_data(request):
         length = corr_pd.shape[0]
         return JsonResponse({
             'index': category,
-            'title': '各品种{}至{}的相关性分析'.format(day.date(), begin_day.date()),
+            'title': '各品种{}至{}的相关性分析'.format(begin_day.date(), day.date()),
             'data': [[i, j, corr_pd.iloc[i, j]] for i in list(range(length)) for j in list(range(length))]
         }, safe=False)
     except Exception as e:
