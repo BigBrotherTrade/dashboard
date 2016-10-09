@@ -6,18 +6,19 @@
 {% endblock %}
 {% block content %}
     <div class="row">
-        <div class="col-md-12">
-            <div class="dropdown">
-                <button id="dLabel" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">选择合约<span
-                        class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="dLabel">
-                    {% for obj in object_list %}
-                        <li><a href="{% url 'panel:instrument_view' pk=obj.id %}">{{ obj }}</a></li>
-                    {% endfor %}
-                </ul>
+        {% for exchange, insts in inst_list.items %}
+            <div class="col-md-1">
+                <div class="dropdown">
+                    <button id="dLabel" type="button" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false">{{ exchange }}<span class="caret"></span></button>
+                    <ul class="dropdown-menu" aria-labelledby="dLabel">
+                        {% for obj in insts %}
+                            <li><a href="{% url 'panel:instrument_view' pk=obj.id %}">{{ obj.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
-        </div>
+        {% endfor %}
     </div>
     <div class="row">
         <div class="col-md-12" id="main" style="width: 100%;height:500px;" data-inst="{{ pk }}"></div>

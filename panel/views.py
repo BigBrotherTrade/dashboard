@@ -37,7 +37,11 @@ class CorrelationView(LoginRequiredMixin, TemplateView):
 class InstrumentView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(InstrumentView, self).get_context_data(**kwargs)
-        context['object_list'] = Strategy.objects.get(name='大哥2.0').instruments.all().order_by('exchange')
+        exchanges = Instrument.objects.all().values_list('exchange', flat=True).distinct()
+        inst_list = dict()
+        for ex in exchanges:
+            inst_list[ExchangeType.values[ex]] = Strategy.objects.get(name='大哥2.0').instruments.filter(exchange=ex)
+        context['inst_list'] = inst_list
         return context
 
 
@@ -93,9 +97,10 @@ def bar_data(request):
 
 def corr_data(request):
     try:
+        year = int(request.GET['year'])
         day = datetime.datetime.today()
         price_dict = dict()
-        begin_day = day.replace(year=day.year - 1)
+        begin_day = day.replace(year=day.year - year)
         category = list()
         for inst in Strategy.objects.get(name='大哥2.0').instruments.all():
             category.append(inst.name)
@@ -107,9 +112,8 @@ def corr_data(request):
         corr_pd = pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
         length = corr_pd.shape[0]
         return JsonResponse({
-            'index': category,
-            'title': '各品种{}至{}的相关性分析'.format(begin_day.date(), day.date()),
-            'data': [[i, j, corr_pd.iloc[i, j]] for i in list(range(length)) for j in list(range(length))]
-        }, safe=False)
+            'data': [[category[i], category[j], round(corr_pd.iloc[i, j], 2) if i != j else None]
+                     for i in list(range(length)) for j in list(range(length))],
+            'index': category}, safe=False)
     except Exception as e:
-        logger.error('bar_data failed: %s', e, exc_info=True)
+        logger.error('corr_data failed: %s', e, exc_info=True)

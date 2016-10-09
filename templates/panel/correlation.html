@@ -6,6 +6,20 @@
 {% endblock %}
 {% block content %}
     <div class="row">
-        <div class="col-md-12" id="main" style="width: 100%;height:600px;"></div>
+        <div class="col-md-12" id="main" style="width: 100%;height:550px;" data-year="{{ year }}"></div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="dropup">
+                <button id="dLabel" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">选择分析周期<span
+                        class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dLabel">
+                    {% for y in "12345" %}
+                        <li><a href="{% url 'panel:correlation_view' year=y %}">{{ y }}年</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </div>
 {% endblock %}
