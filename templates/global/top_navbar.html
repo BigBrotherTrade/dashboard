@@ -17,13 +17,16 @@
                 <li><a href="{% url 'panel:performance_view' %}">绩效分析</a></li>
                 <li><a href="{% url 'panel:instrument_view' pk=1 %}">行情分析</a></li>
                 <li><a href="{% url 'panel:correlation_view' year=3 %}">相关性分析</a></li>
+                <li><a href="{% url 'admin:index' %}">后台管理</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="#">欢迎:
-                    <strong>{{ user.get_full_name }}</strong></a></li>
+                <li>
+                    <a href="#">欢迎:<strong>{{ user.get_full_name }}</strong></a>
+                </li>
                 <li>
                     <a href="{% url 'admin:logout' %}?next={% url 'admin:login' %}"><span
-                            class="glyphicon glyphicon-log-out"></span> 注销</a></li>
+                            class="glyphicon glyphicon-log-out"></span> 注销</a>
+                </li>
             </ul>
         </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
