@@ -38,7 +38,8 @@ secChart.setOption({
                 }
             ]
         }
-    ]
+    ],
+    color: ['#2e78b9']
 });
 
 posChart.setOption({
@@ -46,6 +47,7 @@ posChart.setOption({
         text: '持仓方向对比',
         x: 'center'
     },
+    color: ['#ab4340','#3a773a', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'],
     tooltip: {
         trigger: 'item',
         formatter: "{a} <br/>{b} : {c} ({d}%)"
