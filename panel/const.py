@@ -30,11 +30,11 @@ class ExchangeType(DjangoChoices):
 
 
 class SectionType(DjangoChoices):
-    AgriculturalCommodities = C(value='AgriculturalCommodities', label='农产品')
-    NonAgriculturalCommodities = C(value='NonAgriculturalCommodities', label='工业品')
-    Equities = C(value='Equities', label='股指')
-    Rates = C(value='Rates', label='利率')
-    Currencies = C(value='Currencies', label='货币')
+    AgriculturalCommodities = C(value='1AgriculturalCommodities', label='农产品')
+    NonAgriculturalCommodities = C(value='2NonAgriculturalCommodities', label='工业品')
+    Equities = C(value='3Equities', label='股指')
+    Rates = C(value='4Rates', label='利率')
+    Currencies = C(value='5Currencies', label='货币')
 
 
 class AddressType(DjangoChoices):
