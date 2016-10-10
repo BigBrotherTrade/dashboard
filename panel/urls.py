@@ -18,15 +18,21 @@ from django.conf.urls import url
 from .views import *
 
 urlpatterns = [
-    url(r'^$', PerformanceView.as_view(
-        template_name='panel/index.html'), name="performance_view"),
-    url(r'^nav_data$', nav_data, name='get_nav_data'),
+    url(r'^status$', StatusView.as_view(
+        template_name='panel/status.html'), name="status_view"),
+    url(r'^status_data', status_data, name='get_status_data'),
 
-    url(r'^instrument/(?P<pk>(\d+))/$', InstrumentView.as_view(
+    url(r'^performance$', PerformanceView.as_view(
+        template_name='panel/performance.html'), name="performance_view"),
+    url(r'^nav_data', nav_data, name='get_nav_data'),
+
+    url(r'^instrument$', InstrumentView.as_view(
         template_name='panel/instrument.html'), name='instrument_view'),
-    url(r'^bar_data$', bar_data, name='get_bar_data'),
+    url(r'^bar_data', bar_data, name='get_bar_data'),
 
-    url(r'^correlation/(?P<year>(\d+))year$', CorrelationView.as_view(
+    url(r'^correlation$', CorrelationView.as_view(
         template_name='panel/correlation.html'), name="correlation_view"),
-    url(r'^corr_data$', corr_data, name='get_corr_data'),
+    url(r'^corr_data', corr_data, name='get_corr_data'),
+
+
 ]

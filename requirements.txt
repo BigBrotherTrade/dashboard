@@ -10,3 +10,4 @@ numpy
 pandas
 appdirs
 TA-Lib
+django-redis

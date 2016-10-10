@@ -14,6 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import datetime
+import ujson as json
+
+from django.views.decorators.cache import cache_page
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.utils import timezone
@@ -26,6 +29,18 @@ from panel.models import *
 logger = logging.getLogger('panel.view')
 
 
+class StatusView(LoginRequiredMixin, TemplateView):
+    def get_context_data(self, **kwargs):
+        context = super(StatusView, self).get_context_data(**kwargs)
+        stra = Strategy.objects.get(name='大哥2.0')
+        trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list(
+            'frozen_margin', flat=True)
+        context['current'] = stra.broker.current
+        context['pre_balance'] = stra.broker.pre_balance
+        context['margin'] = round(100 * sum(trades) / stra.broker.current, 1)
+        return context
+
+
 class PerformanceView(LoginRequiredMixin, TemplateView):
     pass
 
@@ -33,11 +48,14 @@ class PerformanceView(LoginRequiredMixin, TemplateView):
 class CorrelationView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(CorrelationView, self).get_context_data(**kwargs)
-        sections = Instrument.objects.all().values_list('section', flat=True).distinct()
-        inst_list = dict()
+        sections = Strategy.objects.get(name='大哥2.0').instruments.order_by(
+            'section').values_list('section', flat=True).distinct()
+        inst_list = list()
         for sec in sections:
-            inst_list[SectionType.values[sec]] = Instrument.objects.filter(section=sec).order_by('exchange')
+            inst_list.append((SectionType.values[sec], Strategy.objects.get(name='大哥2.0').instruments.filter(
+                section=sec).order_by('-exchange')))
         context['inst_list'] = inst_list
+        context['strategy_inst'] = Strategy.objects.get(name='大哥2.0').instruments.values_list('id', flat=True)
         return context
 
 
@@ -52,6 +70,7 @@ class InstrumentView(LoginRequiredMixin, TemplateView):
         return context
 
 
+@cache_page(3600 * 24)
 def nav_data(request):
     q = Performance.objects.filter(broker__strategy__name='大哥2.0').order_by('-day').values_list('day', 'NAV')
     rst = []
@@ -60,9 +79,10 @@ def nav_data(request):
     return JsonResponse(rst, safe=False)
 
 
+@cache_page(3600 * 24)
 def bar_data(request):
     try:
-        inst_id = request.GET['inst']
+        inst_id = request.GET['inst_id']
         inst = Instrument.objects.get(id=inst_id)
         break_n = Strategy.objects.first().param_set.get(code='BreakPeriod').int_value + 1
         q = MainBar.objects.filter(product_code=inst.product_code).order_by('time').values_list(
@@ -102,21 +122,27 @@ def bar_data(request):
         logger.error('bar_data failed: %s', e, exc_info=True)
 
 
+def calc_corr(year: int, inst_list: list):
+    category = list()
+    day = datetime.datetime.today()
+    price_dict = dict()
+    begin_day = day.replace(year=day.year - year)
+    for inst in Instrument.objects.filter(id__in=inst_list):
+        category.append(inst.name)
+        price_dict[inst.product_code] = to_df(MainBar.objects.filter(
+            time__gte=begin_day.date(), exchange=inst.exchange,
+            product_code=inst.product_code).order_by('time').values_list('time', 'close'))
+        price_dict[inst.product_code].index = pd.DatetimeIndex(price_dict[inst.product_code].time)
+        price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
+    return category, pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
+
+
+@cache_page(3600 * 24)
 def corr_data(request):
     try:
         year = int(request.GET['year'])
-        day = datetime.datetime.today()
-        price_dict = dict()
-        begin_day = day.replace(year=day.year - year)
-        category = list()
-        for inst in Strategy.objects.get(name='大哥2.0').instruments.all():
-            category.append(inst.name)
-            price_dict[inst.product_code] = to_df(MainBar.objects.filter(
-                time__gte=begin_day.date(), exchange=inst.exchange,
-                product_code=inst.product_code).order_by('time').values_list('time', 'close'))
-            price_dict[inst.product_code].index = pd.DatetimeIndex(price_dict[inst.product_code].time)
-            price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
-        corr_pd = pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
+        insts = json.loads(request.GET['insts'])
+        category, corr_pd = calc_corr(year, insts)
         length = corr_pd.shape[0]
         corr_x = pd.DataFrame([corr_pd.iloc[i, j] for i in range(length) for j in range(i+1, length)])
         return JsonResponse({
@@ -126,3 +152,36 @@ def corr_data(request):
             'index': category}, safe=False)
     except Exception as e:
         logger.error('corr_data failed: %s', e, exc_info=True)
+
+
+def status_data(request):
+    try:
+        stra = Strategy.objects.get(name='大哥2.0')
+        Trade.objects.filter(
+            strategy=stra, close_time__isnull=True,
+            instrument__section=SectionType.AgriculturalCommodities).count()
+        return JsonResponse({
+            'section': [
+                Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True,
+                    instrument__section=SectionType.AgriculturalCommodities).count(),
+                Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True,
+                    instrument__section=SectionType.NonAgriculturalCommodities).count(),
+                Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True,
+                    instrument__section=SectionType.Equities).count(),
+                Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True,
+                    instrument__section=SectionType.Rates).count(),
+                Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True,
+                    instrument__section=SectionType.Currencies).count()
+            ],
+            'long': Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True, direction=DirectionType.LONG).count(),
+            'short': Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True, direction=DirectionType.SHORT).count()
+        }, safe=False)
+    except Exception as e:
+        logger.error('status_data failed: %s', e, exc_info=True)
