@@ -13,7 +13,7 @@
                             aria-expanded="false">{{ exchange }}<span class="caret"></span></button>
                     <ul class="dropdown-menu" aria-labelledby="dLabel">
                         {% for obj in insts %}
-                            <li><a href="{% url 'panel:instrument_view' pk=obj.id %}">{{ obj.name }}</a></li>
+                            <li><a href="{% url 'panel:instrument_view' %}?inst_id={{ obj.id }}">{{ obj.name }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -21,6 +21,6 @@
         {% endfor %}
     </div>
     <div class="row">
-        <div class="col-md-12" id="main" style="width: 100%;height:500px;" data-inst="{{ pk }}"></div>
+        <div class="col-md-12" id="main" style="width: 100%;height:500px;"></div>
     </div>
 {% endblock %}

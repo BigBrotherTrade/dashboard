@@ -1,4 +1,4 @@
-<nav class="navbar navbar-inverse">
+<nav class="navbar navbar-default">
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
@@ -14,20 +14,26 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
-                <li><a href="{% url 'panel:performance_view' %}">绩效分析</a></li>
-                <li><a href="{% url 'panel:instrument_view' pk=1 %}">行情分析</a></li>
-                <li><a href="{% url 'panel:correlation_view' year=3 %}">相关性分析</a></li>
+                {% url 'panel:status_view' as stat_url %}
+                {% url 'panel:performance_view' as perf_url %}
+                {% url 'panel:instrument_view' as inst_url %}
+                {% url 'panel:correlation_view' as corr_url %}
+                <li {% if stat_url in request.get_full_path %}class="active"{% endif %}><a
+                        href="{{ stat_url }}">状态监控</a></li>
+                <li {% if perf_url in request.get_full_path %}class="active"{% endif %}><a
+                        href="{{ perf_url }}">绩效分析</a></li>
+                <li {% if inst_url in request.get_full_path %}class="active"{% endif %}><a
+                        href="{{ inst_url }}?inst_id=1">合约分析</a></li>
+                <li {% if corr_url in request.get_full_path %}class="active"{% endif %}><a
+                        href="{{ corr_url }}?year=3">组合分析</a>
+                </li>
                 <li><a href="{% url 'admin:index' %}">后台管理</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a href="#">欢迎:<strong>{{ user.get_full_name }}</strong></a>
-                </li>
-                <li>
-                    <a href="{% url 'admin:logout' %}?next={% url 'admin:login' %}"><span
-                            class="glyphicon glyphicon-log-out"></span> 注销</a>
-                </li>
+                <li><a href="#">欢迎:<strong>{{ user.get_full_name }}</strong></a></li>
+                <li><a href="{% url 'admin:logout' %}?next={% url 'admin:login' %}">
+                        <span class="glyphicon glyphicon-log-out"></span> 注销</a></li>
             </ul>
-        </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
+        </div>
+    </div>
 </nav>

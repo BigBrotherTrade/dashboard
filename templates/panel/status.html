@@ -1,0 +1,49 @@
+{% extends 'global/base_site.html' %}
+{% load static %}
+{% block extrajs %}
+    {{ block.super }}
+    <script src="{% static 'js/status.js' %}"></script>
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-2">
+            <div class="panel panel-info">
+                <div class="panel-heading panel-heading-sm">
+                    <h3 class="panel-title">静态市值</h3>
+                </div>
+                <div class="panel-body panel-body-sm">
+                    <span class="fa fa-rmb">{{ pre_balance }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading panel-heading-sm">
+                    <h3 class="panel-title">动态市值</h3>
+                </div>
+                <div class="panel-body panel-body-sm">
+                    <span class="fa fa-rmb">{{ current }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-success">
+                <div class="panel-heading panel-heading-sm">
+                    <h3 class="panel-title">保证金占用</h3>
+                </div>
+                <div class="panel-body panel-body-sm">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar"
+                             aria-valuenow="{{ margin }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ margin }}%">
+                            <span>{{ margin }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6" id="section" style="width: 500px;height:500px;"></div>
+        <div class="col-md-6" id="position" style="width: 500px;height:500px;"></div>
+    </div>
+{% endblock %}
