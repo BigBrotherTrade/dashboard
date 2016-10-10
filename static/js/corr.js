@@ -38,7 +38,6 @@ option = {
         bottom: '19%',
         inRange: {
             color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
-            // color: ['#216506', '#4ef833','#ecf833','#f4a33a','#ef4a1d']
         }
     },
     series: [
@@ -67,31 +66,103 @@ option = {
 };
 
 // 使用刚指定的配置项和数据显示图表。
+myChart.showLoading();
 myChart.setOption(option);
 
-$.get('/corr_data?year=' + $('#main').data('year'), function (rst) {
-    myChart.setOption({
-        xAxis: {
-            data: rst.index
-        },
-        yAxis: {
-            data: rst.index
-        },
-        series: [
-            {
-                name: '相关性系数',
-                data: rst.data
-            },
-            {
-                name: '投资组合评分',
-                data: [{value: rst.score, name: '投资组合评分'}]
-            }
-        ]
+function load_chart() {
+    myChart.showLoading();
+    var $checked = $("input[type=checkbox]:checked");
+    if ($checked.length == 0) {
+        return;
+    }
+    var ids = [];
+    $checked.each(function () {
+        ids.push($(this).val());
     });
-});
+    $.get('/corr_data?year=' + getUrlParameter('year') + '&insts=' + JSON.stringify(ids), function (rst) {
+        myChart.hideLoading();
+        myChart.setOption({
+            xAxis: {
+                data: rst.index
+            },
+            yAxis: {
+                data: rst.index
+            },
+            series: [
+                {
+                    name: '相关性系数',
+                    data: rst.data
+                },
+                {
+                    name: '投资组合评分',
+                    data: [{value: rst.score, name: '投资组合评分'}]
+                }
+            ]
+        });
+    });
+}
 
 $(window).on('resize', function () {
     myChart.resize();
 });
 
-$(".chosen-select").chosen({include_group_label_in_selected: true});
+$(function () {
+    $('.button-checkbox').each(function () {
+        // Settings
+        var $widget = $(this),
+            $button = $widget.find('button'),
+            $checkbox = $widget.find('input:checkbox'),
+            color = $button.data('color'),
+            settings = {
+                on: {
+                    icon: 'glyphicon glyphicon-check'
+                },
+                off: {
+                    icon: 'glyphicon glyphicon-unchecked'
+                }
+            };
+        // Event Handlers
+        $button.on('click', function () {
+            $checkbox.prop('checked', !$checkbox.is(':checked'));
+            load_chart();
+            $checkbox.triggerHandler('change');
+            updateDisplay();
+        });
+        $checkbox.on('change', function () {
+            updateDisplay();
+        });
+        // Actions
+        function updateDisplay() {
+            var isChecked = $checkbox.is(':checked');
+            // Set the button's state
+            $button.data('state', (isChecked) ? "on" : "off");
+            // Set the button's icon
+            $button.find('.state-icon')
+                .removeClass()
+                .addClass('state-icon ' + settings[$button.data('state')].icon);
+            // Update the button's color
+            if (isChecked) {
+                $button
+                    .removeClass('btn-default')
+                    .addClass('btn-' + color + ' active');
+            }
+            else {
+                $button
+                    .removeClass('btn-' + color + ' active')
+                    .addClass('btn-default');
+            }
+        }
+
+        // Initialization
+        function init() {
+            updateDisplay();
+            // Inject the icon if applicable
+            if ($button.find('.state-icon').length == 0) {
+                $button.prepend('<i class="state-icon ' + settings[$button.data('state')].icon + '"></i>');
+            }
+        }
+
+        init();
+    });
+    load_chart();
+});

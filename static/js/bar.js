@@ -131,7 +131,7 @@ option = {
 // 使用刚指定的配置项和数据显示图表。
 myChart.setOption(option);
 
-$.get('/bar_data?inst=' + $('#main').data('inst'), function (rst) {
+$.get('/bar_data?inst_id=' + getUrlParameter('inst_id'), function (rst) {
     myChart.setOption({
         title: {
             text: rst.title
