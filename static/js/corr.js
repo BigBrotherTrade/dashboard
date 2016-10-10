@@ -124,6 +124,8 @@ $(function () {
         // Event Handlers
         $button.on('click', function () {
             $checkbox.prop('checked', !$checkbox.is(':checked'));
+            var checks = $('#div'+$(this).data('sec')+' > span > input:checked').length;
+            $('#'+$(this).data('sec')+' > b').text(checks);
             load_chart();
             $checkbox.triggerHandler('change');
             updateDisplay();

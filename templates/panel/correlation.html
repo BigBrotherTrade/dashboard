@@ -12,12 +12,12 @@
                 <div class="row">
                     <div class="panel panel-{% if section == '农产品' %}success{% elif section == '工业品' %}warning{% elif section == '股指'%}danger{% elif section == '利率' %}info{% else %}primary{% endif %}">
                         <div class="panel-heading panel-heading-sm">
-                            <h3 class="panel-title">{{ section }}</h3>
+                            <h3 class="panel-title" id="{{ section }}">{{ section }} <b>{{ insts.count }}</b> / {{ insts.count }}</h3>
                         </div>
-                        <div class="panel-body panel-body-sm">
+                        <div class="panel-body panel-body-sm" id="div{{ section }}">
                             {% for inst in insts %}
                                 <span class="button-checkbox">
-                                <button type="button" class="btn" data-color="{% if section == '农产品' %}success{% elif section == '工业品' %}warning{% elif section == '股指'%}danger{% elif section == '利率' %}info{% else %}primary{% endif %}">{{ inst.name }}</button>
+                                <button type="button" class="btn" data-sec="{{ section }}" data-color="{% if section == '农产品' %}success{% elif section == '工业品' %}warning{% elif section == '股指'%}danger{% elif section == '利率' %}info{% else %}primary{% endif %}">{{ inst.name }}</button>
                                 <input type="checkbox" class="hidden" title="" value="{{ inst.id }}"
                                        {% if inst.id in strategy_inst %}checked{% endif %}/>
                             </span>
