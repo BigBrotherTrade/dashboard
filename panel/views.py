@@ -31,7 +31,14 @@ class PerformanceView(LoginRequiredMixin, TemplateView):
 
 
 class CorrelationView(LoginRequiredMixin, TemplateView):
-    pass
+    def get_context_data(self, **kwargs):
+        context = super(CorrelationView, self).get_context_data(**kwargs)
+        sections = Instrument.objects.all().values_list('section', flat=True).distinct()
+        inst_list = dict()
+        for sec in sections:
+            inst_list[SectionType.values[sec]] = Instrument.objects.filter(section=sec).order_by('exchange')
+        context['inst_list'] = inst_list
+        return context
 
 
 class InstrumentView(LoginRequiredMixin, TemplateView):
@@ -111,9 +118,11 @@ def corr_data(request):
             price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
         corr_pd = pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
         length = corr_pd.shape[0]
+        corr_x = pd.DataFrame([corr_pd.iloc[i, j] for i in range(length) for j in range(i+1, length)])
         return JsonResponse({
-            'data': [[category[i], category[j], round(corr_pd.iloc[i, j], 2) if i != j else None]
-                     for i in list(range(length)) for j in list(range(length))],
+            'data': [[category[i], category[j], round(corr_pd.iloc[i, j], 2)]
+                     for i in range(length) for j in range(i+1, length)],
+            'score': round((((1 - (corr_x.abs() ** 2).mean()[0]) * 100) - 80) * 5, 1),
             'index': category}, safe=False)
     except Exception as e:
         logger.error('corr_data failed: %s', e, exc_info=True)
