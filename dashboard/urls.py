@@ -22,5 +22,5 @@ admin.site.site_header = '操盘大哥v2.0-商品期货版'
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include('panel.urls', namespace='panel')),
-    # url(r'^$', RedirectView.as_view(url='/admin/'), name='go-to-admin'),
+    url(r'^$', RedirectView.as_view(url='/status'), name='go-to-status'),
 ]
