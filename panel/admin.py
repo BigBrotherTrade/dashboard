@@ -30,7 +30,7 @@ class AddressAdmin(admin.ModelAdmin):
 @admin.register(Broker)
 class BrokerAdmin(admin.ModelAdmin):
     list_display = ('name', 'contract_type', 'trade_address', 'market_address',
-                    'identify', 'username', 'cash', 'pre_balance', 'current')
+                    'identify', 'username', 'fake', 'cash', 'pre_balance', 'current')
     form = BrokerForm
 
 
