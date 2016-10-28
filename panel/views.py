@@ -25,6 +25,7 @@ import logging
 import pytz
 
 from panel.models import *
+from dashboard.settings import CURRENT_STRATEGY
 
 logger = logging.getLogger('panel.view')
 
@@ -32,7 +33,7 @@ logger = logging.getLogger('panel.view')
 class StatusView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(StatusView, self).get_context_data(**kwargs)
-        stra = Strategy.objects.get(name='大哥2.0')
+        stra = Strategy.objects.get(name=CURRENT_STRATEGY)
         trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list(
             'frozen_margin', flat=True)
         context['current'] = stra.broker.current
@@ -48,14 +49,14 @@ class PerformanceView(LoginRequiredMixin, TemplateView):
 class CorrelationView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(CorrelationView, self).get_context_data(**kwargs)
-        sections = Strategy.objects.get(name='大哥2.0').instruments.order_by(
+        sections = Strategy.objects.get(name=CURRENT_STRATEGY).instruments.order_by(
             'section').values_list('section', flat=True).distinct()
         inst_list = list()
         for sec in sections:
-            inst_list.append((SectionType.values[sec], Strategy.objects.get(name='大哥2.0').instruments.filter(
+            inst_list.append((SectionType.values[sec], Strategy.objects.get(name=CURRENT_STRATEGY).instruments.filter(
                 section=sec).order_by('-exchange')))
         context['inst_list'] = inst_list
-        context['strategy_inst'] = Strategy.objects.get(name='大哥2.0').instruments.values_list('id', flat=True)
+        context['strategy_inst'] = Strategy.objects.get(name=CURRENT_STRATEGY).instruments.values_list('id', flat=True)
         return context
 
 
@@ -65,14 +66,14 @@ class InstrumentView(LoginRequiredMixin, TemplateView):
         exchanges = Instrument.objects.all().values_list('exchange', flat=True).distinct()
         inst_list = dict()
         for ex in exchanges:
-            inst_list[ExchangeType.values[ex]] = Strategy.objects.get(name='大哥2.0').instruments.filter(exchange=ex)
+            inst_list[ExchangeType.values[ex]] = Strategy.objects.get(name=CURRENT_STRATEGY).instruments.filter(exchange=ex)
         context['inst_list'] = inst_list
         return context
 
 
 @cache_page(3600 * 24)
 def nav_data(request):
-    q = Performance.objects.filter(broker__strategy__name='大哥2.0').order_by('-day').values_list('day', 'NAV')
+    q = Performance.objects.filter(broker__strategy__name=CURRENT_STRATEGY).order_by('-day').values_list('day', 'NAV')
     rst = []
     for day, val in q:
         rst.append([day.isoformat(), float(val)])
@@ -156,7 +157,7 @@ def corr_data(request):
 
 def status_data(request):
     try:
-        stra = Strategy.objects.get(name='大哥2.0')
+        stra = Strategy.objects.get(name=CURRENT_STRATEGY)
         Trade.objects.filter(
             strategy=stra, close_time__isnull=True,
             instrument__section=SectionType.AgriculturalCommodities).count()

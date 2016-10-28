@@ -168,4 +168,4 @@ LOGIN_REDIRECT_URL = '/'
 CURRENT_STRATEGY = '大哥2.0'
 if sys.platform == 'linux':
     DEBUG = True
-    ALLOWED_HOSTS = ['hk.timercrack.me']
+    ALLOWED_HOSTS = ['timercrack.me']
