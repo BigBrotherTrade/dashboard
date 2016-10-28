@@ -81,7 +81,7 @@ class ParamAdmin(admin.ModelAdmin):
 @admin.register(Signal)
 class SignalAdmin(admin.ModelAdmin):
     list_display = (
-        'strategy', 'instrument', 'type', 'trigger_value', 'price', 'volume',
+        'strategy', 'instrument', 'code', 'type', 'trigger_value', 'price', 'volume',
         'trigger_time', 'priority', 'processed')
     search_fields = ('instrument',)
 
