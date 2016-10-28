@@ -165,7 +165,7 @@ STATICFILES_DIRS = [
 LOGIN_URL = '/admin/'
 LOGIN_REDIRECT_URL = '/'
 
-CURRENT_STRATEGY = '大哥2.0'
+CURRENT_STRATEGY = '有钱自己赚'
 if sys.platform == 'linux':
     DEBUG = True
     ALLOWED_HOSTS = ['timercrack.me']
