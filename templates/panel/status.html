@@ -71,7 +71,7 @@
                         <td>{{ pos.shares }}</td>
                         <td>{{ pos.avg_entry_price|number }}</td>
                         <td>{{ pos.open_time.date }}</td>
-                        <td>{{ pos.profit|number }}</td>
+                        <td><span class="fa fa-rmb"> {{ pos.profit|number }}</span></td>
                     </tr>
                 {% endfor %}
                 </tbody>
