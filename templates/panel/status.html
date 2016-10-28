@@ -28,13 +28,13 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="panel panel-success">
+            <div class="panel panel-{% if margin <= 50 %}success{% elif margin <= 75 %}warning{% else %}danger{% endif %}">
                 <div class="panel-heading panel-heading-sm">
                     <h3 class="panel-title">保证金占用</h3>
                 </div>
                 <div class="panel-body panel-body-sm">
                     <div class="progress">
-                        <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar"
+                        <div class="progress-bar progress-bar-{% if margin <= 50 %}success{% elif margin <= 75 %}warning{% else %}danger{% endif %} progress-bar-striped" role="progressbar"
                              aria-valuenow="{{ margin }}" aria-valuemin="0" aria-valuemax="100"
                              style="width: {{ margin }}%">
                             <span>{{ margin }}%</span>
@@ -48,9 +48,9 @@
         <div class="col-md-6" id="section" style="width: 600px;height:400px;"></div>
         <div class="col-md-6" id="position" style="width: 600px;height:400px;"></div>
     </div>
-    <div class="row">
+    <div class="row table-responsive">
         <div class="col-md-12">
-            <table class="table table-striped">
+            <table class="table table-striped table-hover">
                 <thead>
                 <tr>
                     <th>合约</th>
