@@ -1,5 +1,6 @@
 {% extends 'global/base_site.html' %}
 {% load static %}
+{% load custom_tag %}
 {% block extrajs %}
     {{ block.super }}
     <script src="{% static 'js/status.js' %}"></script>
@@ -53,22 +54,24 @@
                 <thead>
                 <tr>
                     <th>合约</th>
+                    <th>代码</th>
                     <th>方向</th>
                     <th>数量</th>
                     <th>持仓均价</th>
                     <th>开仓日期</th>
-                    <th>盈亏</th>
+                    <th>持仓盈亏</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for pos in pos_list %}
                     <tr>
-                        <td>{{ pos.instrument }} {{ pos.code }}</td>
+                        <td>{{ pos.instrument }}</td>
+                        <td>{{ pos.code }}</td>
                         <td>{{ pos.direction }}</td>
                         <td>{{ pos.shares }}</td>
-                        <td>{{ pos.avg_entry_price }}</td>
-                        <td>{{ pos.open_time }}</td>
-                        <td>{{ pos.profit }}</td>
+                        <td>{{ pos.avg_entry_price|number }}</td>
+                        <td>{{ pos.open_time.date }}</td>
+                        <td>{{ pos.profit|number }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
