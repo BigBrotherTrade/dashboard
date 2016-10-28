@@ -39,6 +39,7 @@ class StatusView(LoginRequiredMixin, TemplateView):
         context['current'] = stra.broker.current
         context['pre_balance'] = stra.broker.pre_balance
         context['margin'] = round(100 * sum(trades) / stra.broker.current, 1)
+        context['pos_list'] = Trade.objects.filter(strategy=stra, close_time__isnull=True).order_by('-profit')
         return context
 
 

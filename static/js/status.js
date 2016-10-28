@@ -62,6 +62,13 @@ posChart.setOption({
             name: '持仓',
             type: 'pie',
             data: [],
+            label: {
+                normal: {
+                    show: true,
+                    position: 'inside',
+                    formatter: '{c}'
+                }
+            },
             itemStyle: {
                 emphasis: {
                     shadowBlur: 10,

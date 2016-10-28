@@ -34,7 +34,8 @@
                 <div class="panel-body panel-body-sm">
                     <div class="progress">
                         <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar"
-                             aria-valuenow="{{ margin }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ margin }}%">
+                             aria-valuenow="{{ margin }}" aria-valuemin="0" aria-valuemax="100"
+                             style="width: {{ margin }}%">
                             <span>{{ margin }}%</span>
                         </div>
                     </div>
@@ -45,5 +46,33 @@
     <div class="row">
         <div class="col-md-6" id="section" style="width: 600px;height:400px;"></div>
         <div class="col-md-6" id="position" style="width: 600px;height:400px;"></div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>合约</th>
+                    <th>方向</th>
+                    <th>数量</th>
+                    <th>持仓均价</th>
+                    <th>开仓日期</th>
+                    <th>盈亏</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for pos in pos_list %}
+                    <tr>
+                        <td>{{ pos.instrument }} {{ pos.code }}</td>
+                        <td>{{ pos.direction }}</td>
+                        <td>{{ pos.shares }}</td>
+                        <td>{{ pos.avg_entry_price }}</td>
+                        <td>{{ pos.open_time }}</td>
+                        <td>{{ pos.profit }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 {% endblock %}
