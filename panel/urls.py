@@ -33,6 +33,4 @@ urlpatterns = [
     url(r'^correlation$', CorrelationView.as_view(
         template_name='panel/correlation.html'), name="correlation_view"),
     url(r'^corr_data', corr_data, name='get_corr_data'),
-
-
 ]

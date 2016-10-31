@@ -11,6 +11,12 @@ def number(obj):
 
 
 @register.filter
+def change_strategy(request, new):
+    return request.get_full_path().replace(
+        'strategy={}'.format(request.GET['strategy']), 'strategy={}'.format(new))
+
+
+@register.filter
 def in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 

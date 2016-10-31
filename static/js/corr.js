@@ -79,7 +79,7 @@ function load_chart() {
     $checked.each(function () {
         ids.push($(this).val());
     });
-    $.get('/corr_data?year=' + getUrlParameter('year') + '&insts=' + JSON.stringify(ids), function (rst) {
+    $.get('/corr_data?strategy='+getUrlParameter('strategy')+'&year='+getUrlParameter('year')+'&insts='+JSON.stringify(ids), function (rst) {
         myChart.hideLoading();
         myChart.setOption({
             xAxis: {
@@ -154,7 +154,6 @@ $(function () {
                     .addClass('btn-default');
             }
         }
-
         // Initialization
         function init() {
             updateDisplay();
@@ -163,7 +162,6 @@ $(function () {
                 $button.prepend('<i class="state-icon ' + settings[$button.data('state')].icon + '"></i>');
             }
         }
-
         init();
     });
     load_chart();

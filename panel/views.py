@@ -16,6 +16,7 @@
 import datetime
 import ujson as json
 
+from django.db.models import Q
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
@@ -25,56 +26,70 @@ import logging
 import pytz
 
 from panel.models import *
-from dashboard.settings import CURRENT_STRATEGY
 
 logger = logging.getLogger('panel.view')
 
 
-class StatusView(LoginRequiredMixin, TemplateView):
+class CustomBaseView(LoginRequiredMixin, TemplateView):
+    def get_context_data(self, **kwargs):
+        context = super(CustomBaseView, self).get_context_data(**kwargs)
+        context['cur_stra'] = Strategy.objects.get(id=self.request.GET.get('strategy'))
+        context['stra_list'] = Strategy.objects.all()
+        return context
+
+
+class StatusView(CustomBaseView):
     def get_context_data(self, **kwargs):
         context = super(StatusView, self).get_context_data(**kwargs)
-        stra = Strategy.objects.get(name=CURRENT_STRATEGY)
+        stra = context['cur_stra']
         trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list(
             'frozen_margin', flat=True)
         context['current'] = stra.broker.current
         context['pre_balance'] = stra.broker.pre_balance
         context['margin'] = round(100 * sum(trades) / stra.broker.current, 1)
         context['pos_list'] = Trade.objects.filter(strategy=stra, close_time__isnull=True).order_by('-profit')
+        context['open_list'] = Signal.objects.filter(
+            Q(type=SignalType.BUY) | Q(type=SignalType.SELL_SHORT), strategy=stra, processed=False)
+        context['close_list'] = Signal.objects.filter(
+            Q(type=SignalType.BUY_COVER) | Q(type=SignalType.SELL), strategy=stra,
+            processed=False).values_list('code', flat=True)
+        context['roll_list'] = Signal.objects.filter(
+            type=SignalType.ROLL_CLOSE, strategy=stra, processed=False).values_list('code', flat=True)
         return context
 
 
-class PerformanceView(LoginRequiredMixin, TemplateView):
+class PerformanceView(CustomBaseView):
     pass
 
 
-class CorrelationView(LoginRequiredMixin, TemplateView):
+class CorrelationView(CustomBaseView):
     def get_context_data(self, **kwargs):
         context = super(CorrelationView, self).get_context_data(**kwargs)
-        sections = Strategy.objects.get(name=CURRENT_STRATEGY).instruments.order_by(
-            'section').values_list('section', flat=True).distinct()
+        sections = context['cur_stra'].instruments.order_by('section').values_list('section', flat=True).distinct()
         inst_list = list()
         for sec in sections:
-            inst_list.append((SectionType.values[sec], Strategy.objects.get(name=CURRENT_STRATEGY).instruments.filter(
+            inst_list.append((SectionType.values[sec], context['cur_stra'].instruments.filter(
                 section=sec).order_by('-exchange')))
         context['inst_list'] = inst_list
-        context['strategy_inst'] = Strategy.objects.get(name=CURRENT_STRATEGY).instruments.values_list('id', flat=True)
+        context['strategy_inst'] = context['cur_stra'].instruments.values_list('id', flat=True)
         return context
 
 
-class InstrumentView(LoginRequiredMixin, TemplateView):
+class InstrumentView(CustomBaseView):
     def get_context_data(self, **kwargs):
         context = super(InstrumentView, self).get_context_data(**kwargs)
         exchanges = Instrument.objects.all().values_list('exchange', flat=True).distinct()
         inst_list = dict()
         for ex in exchanges:
-            inst_list[ExchangeType.values[ex]] = Strategy.objects.get(name=CURRENT_STRATEGY).instruments.filter(exchange=ex)
+            inst_list[ExchangeType.values[ex]] = context['cur_stra'].instruments.filter(exchange=ex)
         context['inst_list'] = inst_list
         return context
 
 
-@cache_page(3600 * 24)
+# @cache_page(3600 * 24)
 def nav_data(request):
-    q = Performance.objects.filter(broker__strategy__name=CURRENT_STRATEGY).order_by('-day').values_list('day', 'NAV')
+    q = Performance.objects.filter(broker__strategy__id=request.GET.get('strategy')).order_by(
+        '-day').values_list('day', 'NAV')
     rst = []
     for day, val in q:
         rst.append([day.isoformat(), float(val)])
@@ -95,7 +110,8 @@ def bar_data(request):
             rst['k'].append([float(oo), float(cc), float(ll), float(hh)])
             rst['up'].append(max(x[2] for x in rst['k'][-break_n:]))
             rst['down'].append(min(x[2] for x in rst['k'][-break_n:]))
-        for t in Trade.objects.filter(instrument_id=inst_id).order_by('open_time'):
+        for t in Trade.objects.filter(
+                instrument_id=inst_id, strategy_id=request.GET.get('strategy')).order_by('open_time'):
             if t.close_time is None:
                 close_price = rst['k'][-1][1]
                 close_time = rst['x'][-1]
@@ -142,8 +158,8 @@ def calc_corr(year: int, inst_list: list):
 @cache_page(3600 * 24)
 def corr_data(request):
     try:
-        year = int(request.GET['year'])
-        insts = json.loads(request.GET['insts'])
+        year = int(request.GET.get('year'))
+        insts = json.loads(request.GET.get('insts'))
         category, corr_pd = calc_corr(year, insts)
         length = corr_pd.shape[0]
         corr_x = pd.DataFrame([corr_pd.iloc[i, j] for i in range(length) for j in range(i+1, length)])
@@ -158,7 +174,7 @@ def corr_data(request):
 
 def status_data(request):
     try:
-        stra = Strategy.objects.get(name=CURRENT_STRATEGY)
+        stra = Strategy.objects.get(id=request.GET.get('strategy'))
         Trade.objects.filter(
             strategy=stra, close_time__isnull=True,
             instrument__section=SectionType.AgriculturalCommodities).count()

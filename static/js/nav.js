@@ -48,7 +48,7 @@ var option = {
 // 使用刚指定的配置项和数据显示图表。
 myChart.setOption(option);
 
-$.get('/nav_data', function (rst) {
+$.get('/nav_data?strategy='+getUrlParameter('strategy'), function (rst) {
     myChart.setOption({
         series: [{
             name: '单位净值',

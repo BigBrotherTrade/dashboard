@@ -34,7 +34,8 @@
                 </div>
                 <div class="panel-body panel-body-sm">
                     <div class="progress">
-                        <div class="progress-bar progress-bar-{% if margin <= 50 %}success{% elif margin <= 75 %}warning{% else %}danger{% endif %} progress-bar-striped" role="progressbar"
+                        <div class="progress-bar progress-bar-{% if margin <= 50 %}success{% elif margin <= 75 %}warning{% else %}danger{% endif %} progress-bar-striped"
+                             role="progressbar"
                              aria-valuenow="{{ margin }}" aria-valuemin="0" aria-valuemax="100"
                              style="width: {{ margin }}%">
                             <span>{{ margin }}%</span>
@@ -63,9 +64,20 @@
                 </tr>
                 </thead>
                 <tbody>
+                {% for sig in open_list %}
+                    <tr class="success">
+                        <td>{{ sig.instrument }} <b>(开仓)</b></td>
+                        <td>{{ sig.code }}</td>
+                        <td>{{ sig.get_type_display }}</td>
+                        <td>{{ sig.volume }}</td>
+                        <td>{{ sig.price|number }}</td>
+                        <td>{{ sig.trigger_time.date }}</td>
+                        <td>-</td>
+                    </tr>
+                {% endfor %}
                 {% for pos in pos_list %}
-                    <tr>
-                        <td>{{ pos.instrument }}</td>
+                    <tr class="{% if pos.code in close_list %}danger{% elif pos.code in roll_list %}warning{% endif %}">
+                        <td>{{ pos.instrument }}{% if pos.code in close_list %} <b>(平仓)</b>{% elif pos.code in roll_list %} <b>(换月)</b>{% endif %}</td>
                         <td>{{ pos.code }}</td>
                         <td>{{ pos.direction }}</td>
                         <td>{{ pos.shares }}</td>

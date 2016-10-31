@@ -80,7 +80,7 @@ posChart.setOption({
     ]
 });
 
-$.get('/status_data', function (rst) {
+$.get('/status_data?strategy='+getUrlParameter('strategy'), function (rst) {
     secChart.setOption({
         series: [{
             data: [{
@@ -88,8 +88,7 @@ $.get('/status_data', function (rst) {
                 name: '持仓'
             }]
         }]
-    })
-    ;
+    });
     posChart.setOption({
         series: [
             {

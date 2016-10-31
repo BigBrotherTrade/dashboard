@@ -81,11 +81,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'QuantDB',
         'HOST': 'localhost',
-        'USER': 'quant',
-        'PASSWORD': 'jeffchen1986',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-        }
+        'USER': 'root'
     },
 }
 
@@ -165,7 +161,6 @@ STATICFILES_DIRS = [
 LOGIN_URL = '/admin/'
 LOGIN_REDIRECT_URL = '/'
 
-CURRENT_STRATEGY = '有钱自己赚'
 if sys.platform == 'linux':
     DEBUG = True
     ALLOWED_HOSTS = ['timercrack.me']
