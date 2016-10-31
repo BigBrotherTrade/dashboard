@@ -13,7 +13,7 @@
                             aria-expanded="false">{{ exchange }}<span class="caret"></span></button>
                     <ul class="dropdown-menu" aria-labelledby="dLabel">
                         {% for obj in insts %}
-                            <li><a href="{% url 'panel:instrument_view' %}?inst_id={{ obj.id }}">{{ obj.name }}</a></li>
+                            <li><a href="{% url 'panel:instrument_view' %}?strategy={{ cur_stra.id }}&inst_id={{ obj.id }}">{{ obj.name }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
