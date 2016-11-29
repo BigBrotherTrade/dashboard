@@ -56,6 +56,7 @@
                 <tr>
                     <th>合约</th>
                     <th>代码</th>
+                    <th>夜盘</th>
                     <th>方向</th>
                     <th>数量</th>
                     <th>持仓均价</th>
@@ -68,6 +69,7 @@
                     <tr class="success">
                         <td>{{ sig.instrument }} <b>(开仓)</b></td>
                         <td>{{ sig.code }}</td>
+                        <td>{% if sig.instrument.night_trade == 1 %}有{% endif %}</td>
                         <td>{{ sig.get_type_display }}</td>
                         <td>{{ sig.volume }}</td>
                         <td>{{ sig.price|number }}</td>
@@ -79,6 +81,7 @@
                     <tr class="{% if pos.code in close_list %}danger{% elif pos.code in roll_list %}warning{% endif %}">
                         <td>{{ pos.instrument }}{% if pos.code in close_list %} <b>(平仓)</b>{% elif pos.code in roll_list %} <b>(换月)</b>{% endif %}</td>
                         <td>{{ pos.code }}</td>
+                        <td>{% if pos.instrument.night_trade == 1 %}有{% endif %}</td>
                         <td>{{ pos.direction }}</td>
                         <td>{{ pos.shares }}</td>
                         <td>{{ pos.avg_entry_price|number }}</td>
