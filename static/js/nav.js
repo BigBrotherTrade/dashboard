@@ -18,7 +18,7 @@ var option = {
         data: ['单位净值']
     },
     xAxis: {
-        type: 'time',
+        type: 'category',
         splitLine: {
             show: false
         }
@@ -48,12 +48,15 @@ var option = {
 // 使用刚指定的配置项和数据显示图表。
 myChart.setOption(option);
 
-$.get('/nav_data?strategy='+getUrlParameter('strategy'), function (rst) {
+$.get('/nav_data?strategy=' + getUrlParameter('strategy'), function (rst) {
     myChart.setOption({
         series: [{
             name: '单位净值',
-            data: rst
-        }]
+            data: rst.nav
+        }],
+        xAxis: {
+            data: rst.x
+        }
     });
 });
 

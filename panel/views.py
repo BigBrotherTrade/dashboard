@@ -93,7 +93,7 @@ def nav_data(request):
     rst = []
     for day, val in q:
         rst.append([day.isoformat(), float(val)])
-    return JsonResponse(rst, safe=False)
+    return JsonResponse({'nav': [a[1] for a in rst], 'x': [a[0] for a in rst]}, safe=False)
 
 
 @cache_page(3600 * 24)
