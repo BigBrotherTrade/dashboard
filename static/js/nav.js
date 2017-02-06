@@ -18,7 +18,7 @@ var option = {
         data: ['单位净值']
     },
     xAxis: {
-        type: 'category',
+        type: 'time',
         splitLine: {
             show: false
         }
@@ -52,11 +52,8 @@ $.get('/nav_data?strategy=' + getUrlParameter('strategy'), function (rst) {
     myChart.setOption({
         series: [{
             name: '单位净值',
-            data: rst.nav
-        }],
-        xAxis: {
-            data: rst.x
-        }
+            data: rst
+        }]
     });
 });
 
