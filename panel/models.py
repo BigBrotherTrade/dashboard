@@ -17,7 +17,7 @@ import pandas as pd
 from pandas.io.sql import read_sql_query
 from django.db import models
 from django.db import connection
-from django.db.models.sql import EmptyResultSet
+from django.core.exceptions import EmptyResultSet
 
 from .const import *
 
