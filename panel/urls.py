@@ -17,6 +17,8 @@ from django.conf.urls import url
 
 from .views import *
 
+app_name = 'dashboard'
+
 urlpatterns = [
     url(r'^status$', StatusView.as_view(
         template_name='panel/status.html'), name="status_view"),
