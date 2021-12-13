@@ -139,7 +139,7 @@ class Instrument(models.Model):
     name = models.CharField('名称', max_length=32, null=True, blank=True)
     product_code = models.CharField('代码', max_length=16, unique=True)
     sina_code = models.CharField('新浪代码', max_length=16, null=True, blank=True)
-    all_inst = models.CharField('品种列表', max_length=128, null=True, blank=True)
+    all_inst = models.CharField('品种列表', max_length=256, null=True, blank=True)
     main_code = models.CharField('主力合约', max_length=16, null=True, blank=True)
     last_main = models.CharField('上个主力', max_length=16, null=True, blank=True)
     change_time = models.DateTimeField('切换时间', null=True, blank=True)
@@ -163,7 +163,7 @@ class Instrument(models.Model):
 class Signal(models.Model):
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.CASCADE)
     instrument = models.ForeignKey(Instrument, verbose_name='品种', on_delete=models.CASCADE)
-    code = models.CharField('当前合约', max_length=8, null=True)
+    code = models.CharField('当前合约', max_length=16, null=True)
     type = models.CharField('信号类型', max_length=16, choices=SignalType.choices)
     trigger_value = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='触发值', null=True, blank=True)
     price = models.DecimalField('价格', max_digits=12, decimal_places=3, null=True, blank=True)
@@ -183,7 +183,7 @@ class Signal(models.Model):
 class MainBar(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
     product_code = models.CharField('品种代码', max_length=8, null=True, db_index=True)
-    code = models.CharField('合约代码', max_length=8, null=True, blank=True)
+    code = models.CharField('合约代码', max_length=16, null=True, blank=True)
     time = models.DateField('时间', db_index=True)
     open = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='开盘价')
     high = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='最高价')
@@ -204,7 +204,7 @@ class MainBar(models.Model):
 
 class DailyBar(models.Model):
     exchange = models.CharField('交易所', max_length=8, choices=ExchangeType.choices)
-    code = models.CharField('品种代码', max_length=8, null=True, db_index=True)
+    code = models.CharField('品种代码', max_length=16, null=True, db_index=True)
     expire_date = models.IntegerField('交割时间', null=True)
     time = models.DateField('时间', db_index=True)
     open = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='开盘价')
@@ -228,7 +228,7 @@ class Order(models.Model):
     strategy = models.ForeignKey(Strategy, verbose_name='策略', on_delete=models.SET_NULL, null=True, blank=True)
     order_ref = models.CharField('报单号', max_length=13)
     instrument = models.ForeignKey(Instrument, verbose_name='品种', on_delete=models.CASCADE)
-    code = models.CharField('合约代码', max_length=8, null=True, blank=True)
+    code = models.CharField('合约代码', max_length=16, null=True, blank=True)
     front = models.IntegerField('前置编号')
     session = models.IntegerField('会话编号')
     price = models.DecimalField(max_digits=12, decimal_places=3, verbose_name='报单价格')
@@ -255,7 +255,7 @@ class Trade(models.Model):
                                    related_name='open_order', null=True, blank=True)
     close_order = models.ForeignKey(Order, verbose_name='平仓报单', on_delete=models.CASCADE,
                                     related_name='close_order', null=True, blank=True)
-    code = models.CharField('合约代码', max_length=8, null=True, blank=True)
+    code = models.CharField('合约代码', max_length=16, null=True, blank=True)
     direction = models.CharField('方向', max_length=8, choices=DirectionType.choices)
     open_time = models.DateTimeField('开仓日期')
     close_time = models.DateTimeField('平仓日期', null=True, blank=True)
