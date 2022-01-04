@@ -16,11 +16,12 @@ secChart.setOption({
     radar: [
         {
             indicator: [
-                {text: '农产品', max: 11},
-                {text: '工业品', max: 22},
-                {text: '股指', max: 10},
-                {text: '利率', max: 2},
-                {text: '货币', max: 10}
+                {text: '股票', max: 10},
+                {text: '债券', max: 10},
+                {text: '基本金属', max: 10},
+                {text: '农产品', max: 10},
+                {text: '能源化工', max: 10},
+                {text: '黑色建材', max: 10}
             ]
         }
     ],
@@ -33,7 +34,7 @@ secChart.setOption({
             itemStyle: {normal: {areaStyle: {type: 'default'}}},
             data: [
                 {
-                    value: [],
+                    value: [5, 1, 2, 6, 4, 2],
                     name: '持仓'
                 }
             ]
@@ -47,7 +48,7 @@ posChart.setOption({
         text: '持仓方向对比',
         x: 'center'
     },
-    color: ['#ab4340','#3a773a', '#61a0a8', '#d48265', '#91c7ae','#749f83',  '#ca8622', '#bda29a','#6e7074', '#546570', '#c4ccd3'],
+    color: ['#ab4340', '#3a773a', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'],
     tooltip: {
         trigger: 'item',
         formatter: "{a} <br/>{b} : {c} ({d}%)"
@@ -80,11 +81,23 @@ posChart.setOption({
     ]
 });
 
-$.get('/status_data?strategy='+getUrlParameter('strategy'), function (rst) {
+$.get('/status_data?strategy=' + getUrlParameter('strategy'), function (rst) {
     secChart.setOption({
+        radar: [
+            {
+                indicator: [
+                    {text: '股票', max: rst.long+rst.short},
+                    {text: '债券', max: rst.long+rst.short},
+                    {text: '基本金属', max: rst.long+rst.short},
+                    {text: '农产品', max: rst.long+rst.short},
+                    {text: '能源化工', max: rst.long+rst.short},
+                    {text: '黑色建材', max: rst.long+rst.short}
+                ]
+            }
+        ],
         series: [{
             data: [{
-                value: rst.section,
+                value: [rst.Stock, rst.Bond, rst.Metal, rst.Agricultural, rst.EnergyChemical, rst.BlackMaterial],
                 name: '持仓'
             }]
         }]

@@ -175,27 +175,25 @@ def corr_data(request):
 def status_data(request):
     try:
         stra = Strategy.objects.get(id=request.GET.get('strategy'))
-        Trade.objects.filter(
-            strategy=stra, close_time__isnull=True,
-            instrument__section=SectionType.AgriculturalCommodities).count()
         return JsonResponse({
-            'section': [
-                Trade.objects.filter(
+            'Stock': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
-                    instrument__section=SectionType.AgriculturalCommodities).count(),
-                Trade.objects.filter(
+                    instrument__section=SectionType.Stock).count(),
+            'Bond': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
-                    instrument__section=SectionType.NonAgriculturalCommodities).count(),
-                Trade.objects.filter(
-                    strategy=stra, close_time__isnull=True,
-                    instrument__section=SectionType.Equities).count(),
-                Trade.objects.filter(
-                    strategy=stra, close_time__isnull=True,
-                    instrument__section=SectionType.Rates).count(),
-                Trade.objects.filter(
-                    strategy=stra, close_time__isnull=True,
-                    instrument__section=SectionType.Currencies).count()
-            ],
+                    instrument__section=SectionType.Bond).count(),
+            'Metal': Trade.objects.filter(
+                strategy=stra, close_time__isnull=True,
+                instrument__section=SectionType.Metal).count(),
+            'Agricultural': Trade.objects.filter(
+                strategy=stra, close_time__isnull=True,
+                instrument__section=SectionType.Agricultural).count(),
+            'EnergyChemical': Trade.objects.filter(
+                strategy=stra, close_time__isnull=True,
+                instrument__section=SectionType.EnergyChemical).count(),
+            'BlackMaterial': Trade.objects.filter(
+                strategy=stra, close_time__isnull=True,
+                instrument__section=SectionType.BlackMaterial).count(),
             'long': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True, direction=DirectionType.LONG).count(),
             'short': Trade.objects.filter(
