@@ -27,14 +27,15 @@ class ExchangeType(DjangoChoices):
     DCE = C(value='DCE', label='大商所')
     CZCE = C(value='CZCE', label='郑商所')
     CFFEX = C(value='CFFEX', label='中金所')
+    INE = C(value='INE', label='上期能源')
 
 
 class SectionType(DjangoChoices):
-    AgriculturalCommodities = C(value='1AgriculturalCommodities', label='农产品')
-    NonAgriculturalCommodities = C(value='2NonAgriculturalCommodities', label='工业品')
-    Equities = C(value='3Equities', label='股指')
-    Rates = C(value='4Rates', label='利率')
-    Currencies = C(value='5Currencies', label='货币')
+    AgriculturalCommodities = C(value='AgriculturalCommodities', label='农产品')
+    NonAgriculturalCommodities = C(value='NonAgriculturalCommodities', label='工业品')
+    Equities = C(value='Equities', label='股指')
+    Rates = C(value='Rates', label='利率')
+    Currencies = C(value='Currencies', label='货币')
 
 
 class AddressType(DjangoChoices):
@@ -86,6 +87,11 @@ DCE_NAME_CODE = {
     '棕榈油': 'p',
     '聚丙烯': 'pp',
     '聚氯乙烯': 'v',
+    '苯乙烯': 'eb',
+    '乙二醇': 'eg',
+    '液化石油气': 'pg',
+    '生猪': 'lh',
+    '粳米': 'rr',
     '豆油': 'y',
 }
 
