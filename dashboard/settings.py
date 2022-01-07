@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'QuantDB',
+        'NAME': 'quantdb',
         'HOST': 'localhost',
         'USER': 'quant',
         'PASSWORD': '123456'
@@ -169,4 +169,4 @@ LOGIN_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 if sys.platform == 'linux':
     DEBUG = True
-    ALLOWED_HOSTS = ['timercrack.me']
+    ALLOWED_HOSTS = ['*']

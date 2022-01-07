@@ -34,7 +34,7 @@ secChart.setOption({
             itemStyle: {normal: {areaStyle: {type: 'default'}}},
             data: [
                 {
-                    value: [5, 1, 2, 6, 4, 2],
+                    value: [],
                     name: '持仓'
                 }
             ]
@@ -86,18 +86,18 @@ $.get('/status_data?strategy=' + getUrlParameter('strategy'), function (rst) {
         radar: [
             {
                 indicator: [
-                    {text: '股票', max: rst.long+rst.short},
-                    {text: '债券', max: rst.long+rst.short},
-                    {text: '基本金属', max: rst.long+rst.short},
-                    {text: '农产品', max: rst.long+rst.short},
-                    {text: '能源化工', max: rst.long+rst.short},
-                    {text: '黑色建材', max: rst.long+rst.short}
+                    {text: '股票', max: Math.max(rst.section)},
+                    {text: '债券', max: Math.max(rst.section)},
+                    {text: '基本金属', max: Math.max(rst.section)},
+                    {text: '农产品', max: Math.max(rst.section)},
+                    {text: '能源化工', max: Math.max(rst.section)},
+                    {text: '黑色建材', max: Math.max(rst.section)}
                 ]
             }
         ],
         series: [{
             data: [{
-                value: [rst.Stock, rst.Bond, rst.Metal, rst.Agricultural, rst.EnergyChemical, rst.BlackMaterial],
+                value: rst.section,
                 name: '持仓'
             }]
         }]
