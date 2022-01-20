@@ -81,12 +81,14 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'quantdb',
         'HOST': 'localhost',
+        'PORT': '13306',
         'USER': 'quant',
         'PASSWORD': '123456'
     },
 }
 
 app_dir = AppDirs('dashboard')
+os.path.exists(app_dir.user_log_dir) or os.makedirs(app_dir.user_log_dir)
 LOGGING = {
     'version': 1,
     'formatters': {'my_formatter': {'format': '%(asctime)s %(name)s [%(levelname)s] %(message)s'}},
@@ -95,11 +97,11 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(app_dir.user_log_dir, 'dashboard.log'),
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
+            'maxBytes': 1024 * 1024,  # 1 MB
+            'backupCount': 1,
             'formatter': 'my_formatter',
         },
-        'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'my_formatter'},
+        'console': {'level': 'DEBUG', 'class': 'logging.StreamHandler', 'formatter': 'my_formatter'},
     },
     'loggers': {
         'panel': {'handlers': ['file', 'console']}
