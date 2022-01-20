@@ -81,9 +81,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'quantdb',
         'HOST': 'localhost',
-        'PORT': '13306',
+        'PORT': '13306' if sys.platform == 'win32' else '3306',
         'USER': 'quant',
-        'PASSWORD': '123456'
+        'PASSWORD': '123456',
     },
 }
 
