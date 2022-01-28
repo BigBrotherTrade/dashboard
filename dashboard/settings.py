@@ -14,21 +14,23 @@ import os
 import sys
 from appdirs import AppDirs
 from pathlib import Path
-
+from configparser import ConfigParser
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-oit8p2t6e=g$#(_-6b=^8q9547lm0%p32)rj$@ta@y4nj&x)wr'
+app_dir = AppDirs('dashboard')
+os.path.exists(app_dir.user_log_dir) or os.makedirs(app_dir.user_log_dir)
+os.path.exists(app_dir.user_config_dir) or os.makedirs(app_dir.user_config_dir)
+config_file = os.path.join(app_dir.user_config_dir, 'config.ini')
+config = ConfigParser(interpolation=None)
+config.read(config_file)
+SECRET_KEY = config.get('DJANGO', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config.getboolean('DJANGO', 'debug')
 
-ALLOWED_HOSTS = ['*'] if sys.platform == 'linux' else []
+ALLOWED_HOSTS = [config.get('DJANGO', 'allowed_hosts')]
 
 # Application definition
 
@@ -79,22 +81,20 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'quantdb',
-        'HOST': 'localhost',
-        'PORT': '13306' if sys.platform == 'win32' else '3306',
-        'USER': 'quant',
-        'PASSWORD': '123456',
+        'NAME': config.get('MYSQL', 'db'),
+        'HOST': config.get('MYSQL', 'host'),
+        'PORT': config.get('MYSQL', 'port'),
+        'USER': config.get('MYSQL', 'user'),
+        'PASSWORD': config.get('MYSQL', 'password'),
     },
 }
 
-app_dir = AppDirs('dashboard')
-os.path.exists(app_dir.user_log_dir) or os.makedirs(app_dir.user_log_dir)
 LOGGING = {
     'version': 1,
-    'formatters': {'my_formatter': {'format': '%(asctime)s %(name)s [%(levelname)s] %(message)s'}},
+    'formatters': {'my_formatter': {'format': config.get('LOG', 'format')}},
     'handlers': {
         'file': {
-            'level': 'INFO',
+            'level': config.get('LOG', 'level'),
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(app_dir.user_log_dir, 'dashboard.log'),
             'maxBytes': 1024 * 1024,  # 1 MB
@@ -107,10 +107,6 @@ LOGGING = {
         'panel': {'handlers': ['file', 'console']}
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -130,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",
+        "LOCATION": config.get('REDIS', 'connect_string'),
         "TIMEOUT": 3600 * 24,  # one day
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
