@@ -1,7 +1,13 @@
 // 基于准备好的dom，初始化echarts实例
-var myChart = echarts.init(document.getElementById('main'));
+const myChart = echarts.init(document.getElementById('main'));
 
 option = {
+    aria: {
+        enabled: true,
+        decal: {
+            show: true
+        }
+    },
     backgroundColor: '#000000',
     color: ['#ff0', '#0f0', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'],
     title: {
@@ -131,7 +137,7 @@ option = {
 // 使用刚指定的配置项和数据显示图表。
 myChart.setOption(option);
 
-$.get('/bar_data?strategy='+getUrlParameter('strategy')+'&inst_id='+getUrlParameter('inst_id'), function (rst) {
+$.get('/bar_data?strategy=' + getUrlParameter('strategy') + '&inst_id=' + getUrlParameter('inst_id'), function (rst) {
     myChart.setOption({
         title: {
             text: rst.title

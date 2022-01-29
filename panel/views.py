@@ -42,19 +42,22 @@ class StatusView(CustomBaseView):
     def get_context_data(self, **kwargs):
         context = super(StatusView, self).get_context_data(**kwargs)
         stra = context['cur_stra']
-        trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list(
-            'frozen_margin', flat=True)
+        trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list('frozen_margin', flat=True)
         context['current'] = stra.broker.current
         context['pre_balance'] = stra.broker.pre_balance
-        context['margin'] = round(100 * sum(trades) / stra.broker.current, 1)
-        context['pos_list'] = Trade.objects.filter(strategy=stra, close_time__isnull=True).order_by('-profit')
+        context['margin'] = round(100 * stra.broker.margin / stra.broker.current, 1)
+        context['pos_list'] = Trade.objects.filter(strategy=stra, close_time__isnull=True).order_by(
+            'instrument__exchange', 'instrument__section')
         context['open_list'] = Signal.objects.filter(
-            Q(type=SignalType.BUY) | Q(type=SignalType.SELL_SHORT), strategy=stra, processed=False)
+            Q(type=SignalType.BUY) | Q(type=SignalType.SELL_SHORT), strategy=stra, processed=False).order_by(
+            'instrument__exchange', 'instrument__section')
         context['close_list'] = Signal.objects.filter(
             Q(type=SignalType.BUY_COVER) | Q(type=SignalType.SELL), strategy=stra,
-            processed=False).values_list('code', flat=True)
+            processed=False).values_list('code', flat=True).order_by(
+            'instrument__exchange', 'instrument__section')
         context['roll_list'] = Signal.objects.filter(
-            type=SignalType.ROLL_CLOSE, strategy=stra, processed=False).values_list('code', flat=True)
+            type=SignalType.ROLL_CLOSE, strategy=stra, processed=False).values_list('code', flat=True).order_by(
+            'instrument__exchange', 'instrument__section')
         return context
 
 
@@ -89,10 +92,11 @@ class InstrumentView(CustomBaseView):
 # @cache_page(3600 * 24)
 def nav_data(request):
     q = Performance.objects.filter(broker__strategy__id=request.GET.get('strategy')).order_by(
-        '-day').values_list('day', 'NAV')
-    rst = []
-    for day, val in q:
-        rst.append([day.isoformat(), float(val)])
+        '-day').values_list('day', 'NAV', 'accumulated')
+    rst = {'nav': [], 'accu': []}
+    for day, val1, val2 in q:
+        rst['nav'].append([day.isoformat(), float(val1)])
+        rst['accu'].append([day.isoformat(), float(val2)])
     return JsonResponse(rst, safe=False)
 
 
@@ -162,10 +166,10 @@ def corr_data(request):
         insts = json.loads(request.GET.get('insts'))
         category, corr_pd = calc_corr(year, insts)
         length = corr_pd.shape[0]
-        corr_x = pd.DataFrame([corr_pd.iloc[i, j] for i in range(length) for j in range(i+1, length)])
+        corr_x = pd.DataFrame([corr_pd.iloc[i, j] for i in range(length) for j in range(i + 1, length)])
         return JsonResponse({
             'data': [[category[i], category[j], round(corr_pd.iloc[i, j], 2)]
-                     for i in range(length) for j in range(i+1, length)],
+                     for i in range(length) for j in range(i + 1, length)],
             'score': round((((1 - (corr_x.abs() ** 2).mean()[0]) * 100) - 80) * 5, 1),
             'index': category}, safe=False)
     except Exception as e:
@@ -177,29 +181,39 @@ def status_data(request):
         stra = Strategy.objects.get(id=request.GET.get('strategy'))
         return JsonResponse({
             'section': [
-                Trade.objects.filter(
+                {'value': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
                     instrument__section=SectionType.Stock).count(),
-                Trade.objects.filter(
+                 'name': '股票'},
+                {'value': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
                     instrument__section=SectionType.Bond).count(),
-                Trade.objects.filter(
+                 'name': '债券'},
+                {'value': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
                     instrument__section=SectionType.Metal).count(),
-                Trade.objects.filter(
+                 'name': '基本金属'},
+                {'value': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
                     instrument__section=SectionType.Agricultural).count(),
-                Trade.objects.filter(
+                 'name': '农产品'},
+                {'value': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
                     instrument__section=SectionType.EnergyChemical).count(),
-                Trade.objects.filter(
+                 'name': '能源化工'},
+                {'value': Trade.objects.filter(
                     strategy=stra, close_time__isnull=True,
-                    instrument__section=SectionType.BlackMaterial).count()
-            ],
-            'long': Trade.objects.filter(
-                    strategy=stra, close_time__isnull=True, direction=DirectionType.LONG).count(),
-            'short': Trade.objects.filter(
-                    strategy=stra, close_time__isnull=True, direction=DirectionType.SHORT).count()
+                    instrument__section=SectionType.BlackMaterial).count(),
+                 'name': '黑色建材'}],
+            'direct': [
+                {'value': Trade.objects.filter(
+                    strategy=stra, close_time__isnull=True,
+                    direction=DirectionType.values[DirectionType.LONG]).count(),
+                 'name': '多头持仓'},
+                {'value': Trade.objects.filter(
+                     strategy=stra, close_time__isnull=True,
+                     direction=DirectionType.values[DirectionType.SHORT]).count(),
+                 'name': '空头持仓'}]
         }, safe=False)
     except Exception as e:
         logger.error('status_data failed: %s', e, exc_info=True)

@@ -33,7 +33,7 @@
                 <li {% if perf_url in request.get_full_path %}class="active"{% endif %}><a
                         href="{{ perf_url }}?strategy={{ cur_stra.id }}">绩效分析</a></li>
                 <li {% if inst_url in request.get_full_path %}class="active"{% endif %}><a
-                        href="{{ inst_url }}?strategy={{ cur_stra.id }}&inst_id=1">合约分析</a></li>
+                        href="{{ inst_url }}?strategy={{ cur_stra.id }}&inst_id=60">合约分析</a></li>
                 <li {% if corr_url in request.get_full_path %}class="active"{% endif %}><a
                         href="{{ corr_url }}?strategy={{ cur_stra.id }}&year=3">组合分析</a>
                 </li>

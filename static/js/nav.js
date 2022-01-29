@@ -1,8 +1,8 @@
 // 基于准备好的dom，初始化echarts实例
-var myChart = echarts.init(document.getElementById('main'));
+const myChart = echarts.init(document.getElementById('main'));
 
 // 指定图表的配置项和数据
-var option = {
+let option = {
     title: {
         text: '操盘大哥v2.0'
     },
@@ -15,7 +15,7 @@ var option = {
         }
     },
     legend: {
-        data: ['单位净值']
+        data: ['单位净值', '累计净值']
     },
     xAxis: {
         type: 'time',
@@ -42,6 +42,10 @@ var option = {
         name: '单位净值',
         type: 'line',
         data: []
+    },{
+        name: '累计净值',
+        type: 'line',
+        data: []
     }]
 };
 
@@ -52,7 +56,10 @@ $.get('/nav_data?strategy=' + getUrlParameter('strategy'), function (rst) {
     myChart.setOption({
         series: [{
             name: '单位净值',
-            data: rst
+            data: rst.nav
+        },{
+            name: '累计净值',
+            data: rst.accu
         }]
     });
 });
