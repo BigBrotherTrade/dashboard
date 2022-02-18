@@ -23,7 +23,6 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.generic import TemplateView
 import logging
-import pytz
 
 from panel.models import *
 
@@ -42,7 +41,7 @@ class StatusView(CustomBaseView):
     def get_context_data(self, **kwargs):
         context = super(StatusView, self).get_context_data(**kwargs)
         stra = context['cur_stra']
-        trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list('frozen_margin', flat=True)
+        # trades = Trade.objects.filter(strategy=stra, close_time__isnull=True).values_list('frozen_margin', flat=True)
         context['current'] = stra.broker.current
         context['pre_balance'] = stra.broker.pre_balance
         context['margin'] = round(100 * stra.broker.margin / stra.broker.current, 1)
@@ -123,12 +122,12 @@ def bar_data(request):
                     continue
             else:
                 close_price = t.avg_exit_price
-                close_time = timezone.localtime(t.close_time, pytz.FixedOffset(480)).date().isoformat()
+                close_time = timezone.make_aware(t.close_time).date().isoformat()
             rst['trade'].append([
                 {
                     'name': '{}至{} {}仓{}手'.format(
                         t.open_time, close_time, t.direction, t.shares),
-                    'coord': [timezone.localtime(t.open_time, pytz.FixedOffset(480)).date().isoformat(),
+                    'coord': [timezone.make_aware(t.open_time).date().isoformat(),
                               t.avg_entry_price],
                     'lineStyle': {
                         'normal': {
