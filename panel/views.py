@@ -152,7 +152,8 @@ def calc_corr(year: int, inst_list: list):
         category.append(inst.name)
         price_dict[inst.product_code] = to_df(MainBar.objects.filter(
             time__gte=begin_day.date(), exchange=inst.exchange,
-            product_code=inst.product_code).order_by('time').values_list('time', 'close'))
+            product_code=inst.product_code).order_by('time').values_list('time', 'close'),
+                                              index_col='time', parse_dates=['time'])
         price_dict[inst.product_code].index = pd.DatetimeIndex(price_dict[inst.product_code].time)
         price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
     return category, pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
