@@ -122,12 +122,12 @@ def bar_data(request):
                     continue
             else:
                 close_price = t.avg_exit_price
-                close_time = timezone.make_aware(t.close_time).date().isoformat()
+                close_time = t.close_time.date().isoformat()
             rst['trade'].append([
                 {
                     'name': '{}至{} {}仓{}手'.format(
                         t.open_time, close_time, t.direction, t.shares),
-                    'coord': [timezone.make_aware(t.open_time).date().isoformat(),
+                    'coord': [t.open_time.date().isoformat(),
                               t.avg_entry_price],
                     'lineStyle': {
                         'normal': {
@@ -154,7 +154,6 @@ def calc_corr(year: int, inst_list: list):
             time__gte=begin_day.date(), exchange=inst.exchange,
             product_code=inst.product_code).order_by('time').values_list('time', 'close'),
                                               index_col='time', parse_dates=['time'])
-        price_dict[inst.product_code].index = pd.DatetimeIndex(price_dict[inst.product_code].time)
         price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
     return category, pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
 
