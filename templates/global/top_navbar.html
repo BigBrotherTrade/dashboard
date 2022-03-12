@@ -35,7 +35,7 @@
                 <li {% if inst_url in request.get_full_path %}class="active"{% endif %}><a
                         href="{{ inst_url }}?strategy={{ cur_stra.id }}&inst_id=60">合约分析</a></li>
                 <li {% if corr_url in request.get_full_path %}class="active"{% endif %}><a
-                        href="{{ corr_url }}?strategy={{ cur_stra.id }}&year=3">组合分析</a>
+                        href="{{ corr_url }}?strategy={{ cur_stra.id }}&year=10">组合分析</a>
                 </li>
                 <li><a href="{% url 'admin:index' %}">后台管理</a></li>
             </ul>

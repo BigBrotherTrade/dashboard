@@ -67,11 +67,10 @@ class PerformanceView(CustomBaseView):
 class CorrelationView(CustomBaseView):
     def get_context_data(self, **kwargs):
         context = super(CorrelationView, self).get_context_data(**kwargs)
-        sections = context['cur_stra'].instruments.order_by('section').values_list('section', flat=True).distinct()
+        sections = Instrument.objects.all().order_by('section').values_list('section', flat=True).distinct()
         inst_list = list()
         for sec in sections:
-            inst_list.append((SectionType.values[sec], context['cur_stra'].instruments.filter(
-                section=sec).order_by('-exchange')))
+            inst_list.append((SectionType.values[sec], Instrument.objects.filter(section=sec).order_by('-exchange', 'name')))
         context['inst_list'] = inst_list
         context['strategy_inst'] = context['cur_stra'].instruments.values_list('id', flat=True)
         return context
@@ -150,10 +149,10 @@ def calc_corr(year: int, inst_list: list):
     begin_day = day.replace(year=day.year - year)
     for inst in Instrument.objects.filter(id__in=inst_list):
         category.append(inst.name)
-        price_dict[inst.product_code] = to_df(MainBar.objects.filter(
-            time__gte=begin_day.date(), exchange=inst.exchange,
-            product_code=inst.product_code).order_by('time').values_list('time', 'close'),
-                                              index_col='time', parse_dates=['time'])
+        price_dict[inst.product_code] = to_df(
+            MainBar.objects.filter(
+                time__gte=begin_day.date(), exchange=inst.exchange, product_code=inst.product_code).order_by('time').values_list('time', 'close'),
+            index_col='time', parse_dates=['time'])
         price_dict[inst.product_code]['price'] = price_dict[inst.product_code].close.pct_change()
     return category, pd.DataFrame({k: v.price for k, v in price_dict.items()}).corr()
 
